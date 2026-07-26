@@ -17,7 +17,7 @@ await page.getByRole("button", { name: "Use seed" }).click();
 await page.waitForTimeout(700);
 await page.screenshot({ path: resolve(output, "02-map.png") });
 
-await page.getByRole("button", { name: "Encounter, available" }).nth(1).click();
+await page.getByRole("button", { name: "Encounter, available" }).click();
 await page.waitForTimeout(850);
 await page.screenshot({ path: resolve(output, "03-opponent-intro.png") });
 await page.getByRole("button", { name: "Start puzzle against Sumslinger" }).click();
