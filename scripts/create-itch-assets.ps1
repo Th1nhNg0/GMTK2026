@@ -104,28 +104,11 @@ function New-BrandImage {
   $bitmap.Dispose()
 }
 
-function Draw-CoverImage {
-  param(
-    [Parameter(Mandatory = $true)]$Graphics,
-    [Parameter(Mandatory = $true)]$Image,
-    [Parameter(Mandatory = $true)][int]$Width,
-    [Parameter(Mandatory = $true)][int]$Height
-  )
-
-  $scale = [Math]::Max($Width / $Image.Width, $Height / $Image.Height)
-  $scaledWidth = [int][Math]::Ceiling($Image.Width * $scale)
-  $scaledHeight = [int][Math]::Ceiling($Image.Height * $scale)
-  $x = [int](($Width - $scaledWidth) / 2)
-  $y = [int](($Height - $scaledHeight) / 2)
-  $Graphics.DrawImage($Image, $x, $y, $scaledWidth, $scaledHeight)
-}
-
 function New-PromoImage {
   param(
     [Parameter(Mandatory = $true)][int]$Width,
     [Parameter(Mandatory = $true)][int]$Height,
     [Parameter(Mandatory = $true)][string]$OutputPath,
-    [Parameter(Mandatory = $true)][string]$BackgroundPath,
     [Parameter(Mandatory = $true)][bool]$Wide
   )
 
@@ -133,45 +116,124 @@ function New-PromoImage {
   $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
   $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
   $graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
-  $background = [System.Drawing.Image]::FromFile($BackgroundPath)
-
-  $paper = [System.Drawing.ColorTranslator]::FromHtml("#ffffff")
-  $ink = [System.Drawing.ColorTranslator]::FromHtml("#101012")
-  $gold = [System.Drawing.ColorTranslator]::FromHtml("#eab308")
-  $overlay = [System.Drawing.Color]::FromArgb(220, 16, 16, 18)
-  $accent = [System.Drawing.Color]::FromArgb(238, 234, 179, 8)
-
-  Draw-CoverImage -Graphics $graphics -Image $background -Width $Width -Height $Height
-  $graphics.FillRectangle((New-Object System.Drawing.SolidBrush($overlay)), 0, 0, [int]($Width * 0.56), $Height)
-  $graphics.FillRectangle((New-Object System.Drawing.SolidBrush($accent)), 0, [int]($Height * 0.84), [int]($Width * 0.52), 6)
+  $ink = [System.Drawing.ColorTranslator]::FromHtml("#0f0f0d")
+  $panel = [System.Drawing.ColorTranslator]::FromHtml("#1b1a17")
+  $paper = [System.Drawing.ColorTranslator]::FromHtml("#e5dcc4")
+  $gold = [System.Drawing.ColorTranslator]::FromHtml("#c6a75a")
+  $coral = [System.Drawing.ColorTranslator]::FromHtml("#b9685f")
+  $graphics.Clear($ink)
+  $gridPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(20, 229, 220, 196), 1)
+  for ($x = 0; $x -lt $Width; $x += 24) { $graphics.DrawLine($gridPen, $x, 0, $x, $Height) }
+  for ($y = 0; $y -lt $Height; $y += 24) { $graphics.DrawLine($gridPen, 0, $y, $Width, $y) }
+  $panelBrush = New-Object System.Drawing.SolidBrush($panel)
+  $paperBrush = New-Object System.Drawing.SolidBrush($paper)
+  $goldBrush = New-Object System.Drawing.SolidBrush($gold)
+  $inkBrush = New-Object System.Drawing.SolidBrush($ink)
+  $goldPen = New-Object System.Drawing.Pen($gold, 3)
+  $paperPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(95, 229, 220, 196), 2)
 
   if ($Wide) {
-    $titleFont = New-Object System.Drawing.Font("Arial Black", 104, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
-    $taglineFont = New-Object System.Drawing.Font("Arial", 31, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
-    $copyFont = New-Object System.Drawing.Font("Arial", 24, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
-    $x = 78
-    $graphics.DrawString("LAST SUM", $titleFont, (New-Object System.Drawing.SolidBrush($paper)), $x, 124)
-    $graphics.DrawString("STANDING", $titleFont, (New-Object System.Drawing.SolidBrush($gold)), $x, 246)
-    $graphics.DrawString("A 45-SECOND ARITHMETIC ROGUELIKE", $taglineFont, (New-Object System.Drawing.SolidBrush($paper)), $x + 5, 397)
-    $graphics.DrawString("SIX NUMBERS  /  ONE TARGET  /  COUNTDOWN", $copyFont, (New-Object System.Drawing.SolidBrush($paper)), $x + 5, 512)
+    $titleFont = New-Object System.Drawing.Font("Courier New", 104, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $taglineFont = New-Object System.Drawing.Font("Tahoma", 24, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $copyFont = New-Object System.Drawing.Font("Courier New", 20, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $targetFont = New-Object System.Drawing.Font("Courier New", 112, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $tileFont = New-Object System.Drawing.Font("Courier New", 35, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawString("LAST SUM", $titleFont, $paperBrush, 70, 92)
+    $graphics.DrawString("STANDING", $titleFont, $goldBrush, 70, 208)
+    $graphics.DrawString("A 45-SECOND ARITHMETIC ROGUELIKE", $taglineFont, $paperBrush, 76, 350)
+    $graphics.DrawString("ONE TARGET. NO SECOND CHANCES.", $copyFont, $goldBrush, 76, 410)
+    $graphics.FillRectangle($panelBrush, 1050, 70, 440, 264)
+    $graphics.DrawRectangle($goldPen, 1050, 70, 440, 264)
+    $graphics.DrawString("TARGET", $copyFont, $goldBrush, 1080, 95)
+    $graphics.DrawString("743", $targetFont, $paperBrush, 1073, 142)
+    $graphics.DrawString("T−45", $taglineFont, $goldBrush, 1335, 257)
+    $tileX = 580
+    foreach ($value in @(100, 50, 25, 8, 7, 3)) {
+      $graphics.FillRectangle($panelBrush, $tileX, 500, 126, 104)
+      $graphics.DrawRectangle($paperPen, $tileX, 500, 126, 104)
+      $tileOffset = if ($value -ge 100) { 16 } elseif ($value -ge 10) { 29 } else { 47 }
+      $graphics.DrawString([string]$value, $tileFont, $paperBrush, $tileX + $tileOffset, 533)
+      $tileX += 142
+    }
+    $graphics.DrawLine($goldPen, 70, 650, 1610, 650)
   }
   else {
-    $titleFont = New-Object System.Drawing.Font("Arial Black", 72, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
-    $taglineFont = New-Object System.Drawing.Font("Arial", 23, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
-    $copyFont = New-Object System.Drawing.Font("Arial", 18, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
-    $x = 54
-    $graphics.DrawString("LAST SUM", $titleFont, (New-Object System.Drawing.SolidBrush($paper)), $x, 105)
-    $graphics.DrawString("STANDING", $titleFont, (New-Object System.Drawing.SolidBrush($gold)), $x, 190)
-    $graphics.DrawString("A 45-SECOND ARITHMETIC ROGUELIKE", $taglineFont, (New-Object System.Drawing.SolidBrush($paper)), $x + 3, 307)
-    $graphics.DrawString("SIX NUMBERS  /  ONE TARGET  /  COUNTDOWN", $copyFont, (New-Object System.Drawing.SolidBrush($paper)), $x + 3, 405)
+    $titleFont = New-Object System.Drawing.Font("Courier New", 66, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $taglineFont = New-Object System.Drawing.Font("Tahoma", 19, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $copyFont = New-Object System.Drawing.Font("Courier New", 17, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $targetFont = New-Object System.Drawing.Font("Courier New", 92, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $tileFont = New-Object System.Drawing.Font("Courier New", 30, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawString("LAST SUM", $titleFont, $paperBrush, 58, 48)
+    $graphics.DrawString("STANDING", $titleFont, $goldBrush, 58, 122)
+    $graphics.DrawString("BUILD THE EQUATION BEFORE TIME RUNS OUT.", $taglineFont, $paperBrush, 62, 214)
+    $graphics.FillRectangle($panelBrush, 790, 56, 350, 180)
+    $graphics.DrawRectangle($goldPen, 790, 56, 350, 180)
+    $graphics.DrawString("TARGET // 45 SEC", $copyFont, $goldBrush, 822, 80)
+    $graphics.DrawString("743", $targetFont, $paperBrush, 825, 116)
+    $tileX = 68
+    foreach ($value in @(100, 50, 25, 8, 7, 3)) {
+      $graphics.FillRectangle($panelBrush, $tileX, 322, 142, 100)
+      $graphics.DrawRectangle($paperPen, $tileX, 322, 142, 100)
+      $tileOffset = if ($value -ge 100) { 20 } elseif ($value -ge 10) { 35 } else { 54 }
+      $graphics.DrawString([string]$value, $tileFont, $paperBrush, $tileX + $tileOffset, 355)
+      $tileX += 178
+    }
+    $operatorX = 188
+    foreach ($symbol in @("+", [char]0x2212, [char]0x00D7, [char]0x00F7)) {
+      $graphics.DrawEllipse($goldPen, $operatorX, 478, 62, 62)
+      $graphics.DrawString([string]$symbol, $tileFont, $goldBrush, $operatorX + 17, 491)
+      $operatorX += 208
+    }
+    $graphics.DrawString("SIX NUMBERS  /  ONE TARGET  /  COUNTDOWN", $copyFont, $goldBrush, 250, 566)
   }
 
   $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
   $titleFont.Dispose()
   $taglineFont.Dispose()
   $copyFont.Dispose()
-  $background.Dispose()
+  $targetFont.Dispose()
+  $tileFont.Dispose()
+  foreach ($resource in @($gridPen, $panelBrush, $paperBrush, $goldBrush, $inkBrush, $goldPen, $paperPen)) { $resource.Dispose() }
   $graphics.Dispose()
+  $bitmap.Dispose()
+}
+
+function New-BannerImage {
+  param([Parameter(Mandatory = $true)][string]$OutputPath)
+
+  $bitmap = New-Object System.Drawing.Bitmap(960, 240)
+  $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+  $ink = [System.Drawing.ColorTranslator]::FromHtml("#0f0f0d")
+  $panel = [System.Drawing.ColorTranslator]::FromHtml("#1b1a17")
+  $paper = [System.Drawing.ColorTranslator]::FromHtml("#e5dcc4")
+  $gold = [System.Drawing.ColorTranslator]::FromHtml("#c6a75a")
+  $graphics.Clear($ink)
+  $gridPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(20, 229, 220, 196), 1)
+  for ($x = 0; $x -lt 960; $x += 24) { $graphics.DrawLine($gridPen, $x, 0, $x, 240) }
+  for ($y = 0; $y -lt 240; $y += 24) { $graphics.DrawLine($gridPen, 0, $y, 960, $y) }
+  $paperBrush = New-Object System.Drawing.SolidBrush($paper)
+  $goldBrush = New-Object System.Drawing.SolidBrush($gold)
+  $inkBrush = New-Object System.Drawing.SolidBrush($ink)
+  $panelBrush = New-Object System.Drawing.SolidBrush($panel)
+  $goldPen = New-Object System.Drawing.Pen($gold, 2)
+  $titleFont = New-Object System.Drawing.Font("Courier New", 46, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+  $smallFont = New-Object System.Drawing.Font("Courier New", 15, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+  $targetFont = New-Object System.Drawing.Font("Courier New", 42, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+  $timerFont = New-Object System.Drawing.Font("Courier New", 28, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+
+  $graphics.DrawString("LAST SUM", $titleFont, $paperBrush, 42, 34)
+  $graphics.DrawString("STANDING", $titleFont, $goldBrush, 42, 87)
+  $graphics.DrawString("SIX NUMBERS // ONE TARGET // 45 SECONDS", $smallFont, $paperBrush, 46, 166)
+  $graphics.DrawLine($goldPen, 42, 208, 918, 208)
+  $graphics.FillRectangle($panelBrush, 671, 39, 166, 116)
+  $graphics.DrawRectangle($goldPen, 671, 39, 166, 116)
+  $graphics.DrawString("TARGET", $smallFont, $goldBrush, 690, 54)
+  $graphics.DrawString("743", $targetFont, $paperBrush, 695, 83)
+  $graphics.DrawString("T−45", $timerFont, $goldBrush, 852, 78)
+
+  foreach ($resource in @($gridPen, $paperBrush, $goldBrush, $inkBrush, $panelBrush, $goldPen, $titleFont, $smallFont, $targetFont, $timerFont)) { $resource.Dispose() }
+  $graphics.Dispose()
+  $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
   $bitmap.Dispose()
 }
 
@@ -227,15 +289,11 @@ function New-LogoImage {
 }
 
 New-BrandImage -Width 630 -Height 500 -OutputPath (Join-Path $assetPath "cover.png") -Compact $false
-New-BrandImage -Width 960 -Height 240 -OutputPath (Join-Path $assetPath "banner.png") -Compact $true
-
+New-BannerImage -OutputPath (Join-Path $assetPath "banner.png")
 $promoPath = Join-Path $assetPath "promo"
 New-Item -ItemType Directory -Force -Path $promoPath | Out-Null
-$promoBackground = Join-Path $promoPath "promo-background-ai-v1.png"
-if (Test-Path $promoBackground) {
-  New-PromoImage -Width 1200 -Height 630 -OutputPath (Join-Path $promoPath "social-media.png") -BackgroundPath $promoBackground -Wide $false
-  New-PromoImage -Width 1680 -Height 720 -OutputPath (Join-Path $promoPath "wide-cover.png") -BackgroundPath $promoBackground -Wide $true
-}
+New-PromoImage -Width 1200 -Height 630 -OutputPath (Join-Path $promoPath "social-media.png") -Wide $false
+New-PromoImage -Width 1680 -Height 720 -OutputPath (Join-Path $promoPath "wide-cover.png") -Wide $true
 New-FaviconImage -Size 512 -OutputPath (Join-Path $promoPath "favicon.png")
 New-LogoImage -OutputPath (Join-Path $promoPath "logo.png")
 
