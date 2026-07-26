@@ -14,38 +14,40 @@ export function RunHeader({ run }: RunHeaderProps) {
   const setAudioOpen = useUiStore((state) => state.setAudioOpen);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-parchment/10 bg-ink/92 px-3 py-2 backdrop-blur sm:px-6">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 text-sm">
+    <header className="sticky top-0 z-30 border-b border-parchment/30 bg-[#10100e] px-2 py-1 sm:px-4">
+      <div className="mx-auto flex max-w-6xl items-stretch overflow-hidden text-xs sm:text-sm">
         <div
-          className="rounded-lg bg-coral/15 px-3 py-2 font-black text-coral"
+          className="border-r border-parchment/20 bg-coral/10 px-2 py-2 font-bold text-coral sm:px-3"
           aria-label={`${run.hp} of ${run.maxHp} health`}
         >
           ♥ {run.hp}/{run.maxHp}
         </div>
         {run.armor > 0 && (
-          <div className="rounded-lg bg-white/10 px-3 py-2 font-black text-zinc-200">
+          <div className="border-r border-parchment/20 px-2 py-2 font-bold text-zinc-200 sm:px-3">
             ◆ {run.armor}
           </div>
         )}
         {run.weakenedBy > 0 && (
-          <div className="rounded-lg bg-red-400/12 px-3 py-2 font-black text-red-300">
+          <div className="border-r border-parchment/20 px-2 py-2 font-bold text-red-300 sm:px-3">
             −{run.weakenedBy} next hit
           </div>
         )}
         {run.doubleNextDamage && (
-          <div className="rounded-lg bg-yellow-500/12 px-3 py-2 font-black text-yellow-400">
+          <div className="border-r border-parchment/20 px-2 py-2 font-bold text-yellow-400 sm:px-3">
             ×2 next hit
           </div>
         )}
-        <div className="rounded-lg bg-gold/12 px-3 py-2 font-black text-gold">● {run.currency}</div>
+        <div className="border-r border-parchment/20 px-2 py-2 font-bold text-gold sm:px-3">
+          ● {run.currency}
+        </div>
         {run.focusBonusSeconds > 0 && (
-          <div className="rounded-lg bg-mint/10 px-3 py-2 font-black text-mint">
+          <div className="border-r border-parchment/20 px-2 py-2 font-bold text-mint sm:px-3">
             +{run.focusBonusSeconds}s
           </div>
         )}
         {run.relicIds.length > 0 && (
           <div
-            className="hidden max-w-xs truncate rounded-lg bg-mint/10 px-3 py-2 text-mint md:block"
+            className="hidden max-w-xs truncate border-r border-parchment/20 px-3 py-2 text-mint md:block"
             title={run.relicIds
               .map((id) => RELICS.find((relic) => relic.id === id)?.name)
               .filter(Boolean)
@@ -54,23 +56,23 @@ export function RunHeader({ run }: RunHeaderProps) {
             ◈ {run.relicIds.length} relic{run.relicIds.length === 1 ? "" : "s"}
           </div>
         )}
-        <div className="ml-auto flex gap-1">
+        <div className="ml-auto flex border-l border-parchment/20">
           <button
-            className="min-h-11 min-w-11 rounded-lg text-parchment/70 hover:bg-parchment/10 hover:text-parchment"
+            className="min-h-9 min-w-9 border-r border-parchment/20 text-parchment/60 hover:bg-parchment/10 hover:text-parchment"
             onClick={() => setInstructionsOpen(true)}
             aria-label="How to play"
           >
             ?
           </button>
           <button
-            className="min-h-11 min-w-11 rounded-lg text-parchment/70 hover:bg-parchment/10 hover:text-parchment"
+            className="min-h-9 min-w-9 border-r border-parchment/20 text-parchment/60 hover:bg-parchment/10 hover:text-parchment"
             onClick={toggleMuted}
             aria-label={muted ? "Unmute audio" : "Mute audio"}
           >
             {muted ? "♩̸" : "♫"}
           </button>
           <button
-            className="min-h-11 min-w-11 rounded-lg text-parchment/70 hover:bg-parchment/10 hover:text-parchment"
+            className="min-h-9 min-w-9 text-parchment/60 hover:bg-parchment/10 hover:text-parchment"
             onClick={() => setAudioOpen(true)}
             aria-label="Audio and motion settings"
           >

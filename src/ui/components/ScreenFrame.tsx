@@ -11,15 +11,19 @@ interface ScreenFrameProps {
 export function ScreenFrame({ eyebrow, title, description, children, narrow }: ScreenFrameProps) {
   return (
     <section
-      className={`mx-auto flex h-full min-h-0 w-full flex-col overflow-hidden ${narrow ? "max-w-3xl" : "max-w-6xl"} px-4 py-3 sm:px-6 sm:py-6`}
+      className={`mx-auto flex h-full min-h-0 w-full flex-col overflow-hidden ${narrow ? "max-w-3xl" : "max-w-6xl"} px-3 py-3 sm:px-5 sm:py-4`}
     >
-      <header className="mb-4 shrink-0 text-center sm:mb-6">
+      <header className="mb-3 shrink-0 border-b border-parchment/25 pb-3 text-left">
         {eyebrow && (
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.3em] text-gold">{eyebrow}</p>
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-gold">
+            {eyebrow}
+          </p>
         )}
-        <h1 className="font-display text-3xl font-black tracking-tight sm:text-5xl">{title}</h1>
+        <h1 className="font-display text-2xl font-bold uppercase leading-none sm:text-3xl">
+          {title}
+        </h1>
         {description && (
-          <p className="mx-auto mt-2 max-w-2xl text-sm text-parchment/65 sm:mt-3 sm:text-base">
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-parchment/60 sm:text-sm">
             {description}
           </p>
         )}

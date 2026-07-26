@@ -7,7 +7,7 @@ function DialogShell({ children }: { children: React.ReactNode }) {
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm" />
-      <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85dvh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-parchment/15 bg-panel p-6 shadow-2xl focus:outline-none sm:p-8">
+      <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85dvh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto border border-parchment/35 bg-panel p-5 focus:outline-none sm:p-6">
         {children}
       </Dialog.Content>
     </Dialog.Portal>
@@ -27,7 +27,9 @@ export function GlobalDialogs() {
     <>
       <Dialog.Root open={instructionsOpen} onOpenChange={setInstructionsOpen}>
         <DialogShell>
-          <Dialog.Title className="font-display text-3xl font-black">Rules of play</Dialog.Title>
+          <Dialog.Title className="font-display text-2xl font-bold uppercase">
+            Rules of play
+          </Dialog.Title>
           <Dialog.Description className="mt-2 text-parchment/65">
             Build a result as close to the target as possible before the 45-second timer expires.
           </Dialog.Description>
@@ -49,7 +51,7 @@ export function GlobalDialogs() {
               then submit your closest answer—or hit the target exactly to finish instantly.
             </li>
           </ol>
-          <div className="mt-5 rounded-xl bg-ink/45 p-4 text-sm text-parchment/70">
+          <div className="mt-5 border border-parchment/15 bg-ink/45 p-4 text-sm text-parchment/70">
             Exact = 10 damage · within 5 = 7 · within 10 = 5. Only positive whole-number results are
             legal.
           </div>
@@ -63,7 +65,9 @@ export function GlobalDialogs() {
 
       <Dialog.Root open={audioOpen} onOpenChange={setAudioOpen}>
         <DialogShell>
-          <Dialog.Title className="font-display text-3xl font-black">Session settings</Dialog.Title>
+          <Dialog.Title className="font-display text-2xl font-bold uppercase">
+            Session settings
+          </Dialog.Title>
           <Dialog.Description className="mt-2 text-parchment/65">
             These preferences reset when the page closes or refreshes.
           </Dialog.Description>
@@ -91,7 +95,7 @@ export function GlobalDialogs() {
                 />
               </label>
             ))}
-            <label className="flex min-h-11 items-center gap-3 rounded-xl bg-ink/45 px-4 py-3 font-bold">
+            <label className="flex min-h-11 items-center gap-3 border border-parchment/15 bg-ink/45 px-4 py-3 font-bold">
               <input
                 type="checkbox"
                 checked={reducedMotion}

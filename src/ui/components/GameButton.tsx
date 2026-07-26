@@ -7,12 +7,12 @@ interface GameButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary:
-    "bg-gold text-ink shadow-[0_5px_0_#854d0e] hover:bg-[#facc15] active:translate-y-1 active:shadow-none",
-  secondary: "bg-parchment/10 text-parchment ring-1 ring-parchment/20 hover:bg-parchment/16",
-  danger:
-    "bg-coral text-ink shadow-[0_5px_0_#991b1b] hover:bg-[#fca5a5] active:translate-y-1 active:shadow-none",
-  quiet: "bg-transparent text-parchment/70 hover:bg-parchment/8 hover:text-parchment",
+  primary: "border border-[#dfc77f] bg-gold text-ink hover:bg-[#d8bb6d] active:bg-[#ad8d43]",
+  secondary:
+    "border border-parchment/30 bg-panel text-parchment hover:border-parchment/60 hover:bg-[#24231f]",
+  danger: "border border-coral bg-[#6f3e38] text-parchment hover:bg-coral hover:text-ink",
+  quiet:
+    "border border-transparent bg-transparent text-parchment/65 hover:border-parchment/25 hover:text-parchment",
 };
 
 export function GameButton({
@@ -24,7 +24,7 @@ export function GameButton({
 }: GameButtonProps) {
   return (
     <button
-      className={`min-h-11 rounded-xl px-5 py-3 font-black transition disabled:cursor-not-allowed disabled:opacity-40 ${variants[variant]} ${full ? "w-full" : ""} ${className}`}
+      className={`min-h-10 px-4 py-2 text-sm font-bold uppercase tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${variants[variant]} ${full ? "w-full" : ""} ${className}`}
       {...props}
     >
       {children}

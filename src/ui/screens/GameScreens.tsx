@@ -20,14 +20,17 @@ export function TitleScreen() {
   const [debugSeed, setDebugSeed] = useState("2026");
 
   return (
-    <section className="relative flex h-full items-center overflow-hidden px-4 py-5 sm:py-8">
-      <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px),radial-gradient(circle_at_25%_20%,#eab308_0,transparent_24%),radial-gradient(circle_at_75%_75%,#facc15_0,transparent_24%)] [background-size:32px_32px,32px_32px,auto,auto]" />
+    <section className="relative flex h-full items-center overflow-hidden border border-transparent px-4 py-4 sm:py-6">
+      <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:repeating-linear-gradient(0deg,rgba(255,255,255,0.025)_0,rgba(255,255,255,0.025)_1px,transparent_1px,transparent_6px)]" />
       <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative mx-auto w-full max-w-3xl text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative mx-auto w-full max-w-2xl text-center"
       >
-        <h1 className="font-display text-5xl font-black uppercase leading-[0.82] tracking-[-0.06em] sm:text-7xl">
+        <p className="mb-3 text-[10px] uppercase tracking-[0.18em] text-parchment/40">
+          Arithmetic combat program // 2026
+        </p>
+        <h1 className="font-display text-4xl font-bold uppercase leading-[0.9] sm:text-6xl">
           Last Sum
           <br />
           <span className="text-gold">Standing</span>
@@ -45,15 +48,11 @@ export function TitleScreen() {
             </span>
           ))}
         </div>
-        <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-parchment/70 sm:text-lg">
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-parchment/65 sm:text-base">
           Six numbers. One target. Forty-five seconds. Do the arithmetic before it does you.
         </p>
         <div className="mx-auto mt-5 grid max-w-sm gap-2.5 sm:mt-6">
-          <GameButton
-            onClick={() => dispatch({ type: "RUN_STARTED", seed: freshSeed() })}
-            className="text-lg"
-            full
-          >
+          <GameButton onClick={() => dispatch({ type: "RUN_STARTED", seed: freshSeed() })} full>
             Start the clock
           </GameButton>
           <GameButton variant="secondary" onClick={() => setInstructionsOpen(true)} full>
@@ -62,7 +61,7 @@ export function TitleScreen() {
         </div>
         {import.meta.env.DEV && (
           <form
-            className="mx-auto mt-4 flex max-w-sm gap-2 rounded-xl border border-dashed border-parchment/20 p-2"
+            className="mx-auto mt-4 flex max-w-sm gap-2 border border-dashed border-parchment/25 p-2"
             onSubmit={(event) => {
               event.preventDefault();
               dispatch({ type: "RUN_STARTED", seed: Number(debugSeed) || 1 });
@@ -76,7 +75,7 @@ export function TitleScreen() {
               value={debugSeed}
               onChange={(event) => setDebugSeed(event.target.value)}
               inputMode="numeric"
-              className="min-w-0 flex-1 rounded-lg bg-ink px-3 text-parchment"
+              className="min-w-0 flex-1 border border-parchment/20 bg-ink px-3 text-parchment"
             />
             <GameButton type="submit" variant="quiet">
               Use seed
@@ -124,11 +123,11 @@ export function MapScreen({ run }: { run: RunState }) {
 
   return (
     <section className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col overflow-hidden px-3 py-3 sm:px-6 sm:py-5">
-      <header className="mb-3 shrink-0 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gold">
+      <header className="mb-3 shrink-0 border-b border-parchment/25 pb-3 text-left">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gold">
           Seed {run.seed} · Floor {focusRow + 1} / {maxRow + 1}
         </p>
-        <h1 className="mt-1 font-display text-3xl font-black tracking-tight sm:text-4xl">
+        <h1 className="mt-1 font-display text-2xl font-bold uppercase leading-none sm:text-3xl">
           Choose your route
         </h1>
         <p className="mt-1 text-xs text-parchment/55 sm:text-sm">
@@ -138,12 +137,12 @@ export function MapScreen({ run }: { run: RunState }) {
 
       <div
         ref={scrollRef}
-        className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-2xl border border-zinc-700/80 bg-zinc-950/80 [background-image:linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] [background-size:32px_32px] [scrollbar-color:#eab30866_transparent]"
+        className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain border border-parchment/30 bg-[#121210] [scrollbar-color:#c6a75a66_transparent]"
         aria-label="Branching run map"
       >
         <div className="relative mx-auto w-full max-w-2xl" style={{ height: mapHeight }}>
           <div
-            className="pointer-events-none absolute left-0 right-0 z-0 h-px bg-yellow-500/20 shadow-[0_0_18px_rgba(234,179,8,0.22)]"
+            className="pointer-events-none absolute left-0 right-0 z-0 border-t border-dashed border-gold/25"
             style={{ top: yForRow(focusRow) }}
             aria-hidden="true"
           />
@@ -169,16 +168,10 @@ export function MapScreen({ run }: { run: RunState }) {
                     key={`${node.id}-${connectionId}`}
                     d={`M ${sourceX} ${sourceY} C ${sourceX} ${midpointY}, ${targetX} ${midpointY}, ${targetX} ${targetY}`}
                     fill="none"
-                    stroke={reachable ? "#eab308" : travelled ? "#facc15" : "#71717a"}
+                    stroke={reachable ? "#c6a75a" : travelled ? "#8f9e72" : "#5c5a52"}
                     strokeOpacity={reachable ? 1 : travelled ? 0.62 : 0.38}
-                    strokeWidth={reachable ? 4 : travelled ? 3 : 2}
-                    strokeDasharray={reachable ? "8 8" : travelled ? undefined : "3 9"}
-                    animate={reachable ? { strokeDashoffset: [0, -32] } : undefined}
-                    transition={
-                      reachable
-                        ? { duration: 1.2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }
-                        : undefined
-                    }
+                    strokeWidth={reachable ? 3 : travelled ? 2 : 1}
+                    strokeDasharray={travelled ? undefined : "3 7"}
                     vectorEffect="non-scaling-stroke"
                   />
                 );
@@ -192,15 +185,15 @@ export function MapScreen({ run }: { run: RunState }) {
             const completed = node.status === "completed";
             return (
               <motion.button
-                initial={{ scale: 0.85, opacity: 0 }}
-                animate={{ scale: 1, opacity: completed ? 0.8 : available ? 1 : 0.62 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: completed ? 0.8 : available ? 1 : 0.62 }}
                 key={node.id}
                 disabled={!available}
                 onClick={() => dispatch({ type: "MAP_NODE_SELECTED", nodeId: node.id })}
                 aria-label={`${meta.label}, ${node.status}`}
                 data-map-node-status={node.status}
                 style={{ left: `${((node.column + 0.5) / 3) * 100}%`, top: yForRow(node.row) }}
-                className={`absolute flex h-12 w-20 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-xl border bg-zinc-900/95 px-2 text-left shadow-lg transition sm:h-14 sm:w-24 sm:gap-2 sm:px-3 ${meta.tone} ${available ? "cursor-pointer !border-yellow-500 !bg-yellow-500 !text-zinc-950 ring-4 ring-yellow-500/20 shadow-[0_0_28px_rgba(234,179,8,0.2)] hover:scale-105 hover:bg-yellow-400" : "cursor-default border-zinc-600/80"} ${completed ? "!border-yellow-500/50 !bg-yellow-500/10 !text-yellow-300" : ""}`}
+                className={`absolute flex h-12 w-20 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 border bg-[#1b1a17] px-2 text-left transition-colors sm:h-14 sm:w-24 sm:gap-2 sm:px-3 ${meta.tone} ${available ? "cursor-pointer !border-gold !bg-gold !text-ink hover:!bg-[#d8bb6d]" : "cursor-default border-parchment/30"} ${completed ? "!border-mint/60 !bg-mint/10 !text-mint" : ""}`}
               >
                 <span className="text-lg font-black sm:text-xl" aria-hidden="true">
                   {completed ? "✓" : meta.icon}
@@ -217,7 +210,7 @@ export function MapScreen({ run }: { run: RunState }) {
         </div>
       </div>
 
-      <div className="mx-auto mt-2 flex max-w-2xl shrink-0 flex-wrap justify-center gap-x-3 gap-y-1 text-[9px] text-zinc-400 sm:text-xs">
+      <div className="mx-auto mt-2 flex max-w-2xl shrink-0 flex-wrap justify-center gap-x-3 gap-y-1 text-[9px] text-parchment/45 sm:text-[10px]">
         {Object.values(NODE_META).map((meta) => (
           <span key={meta.label}>
             {meta.icon} {meta.label}
@@ -245,13 +238,13 @@ export function RewardScreen({ run }: { run: RunState }) {
             transition={{ delay: index * 0.08 }}
             key={reward.id}
             onClick={() => dispatch({ type: "REWARD_SELECTED", rewardId: reward.id })}
-            className="min-h-36 rounded-2xl border border-parchment/15 bg-panel p-4 text-left transition hover:-translate-y-1 hover:border-gold/70 hover:bg-panel/85 sm:min-h-52 sm:p-5"
+            className="min-h-32 border border-parchment/20 bg-panel p-4 text-left transition-colors hover:border-gold hover:bg-[#24231f] sm:min-h-44"
           >
             <span className="text-xs font-black uppercase tracking-widest text-gold">
               {reward.kind.replace("-", " ")}
             </span>
-            <strong className="mt-4 block font-display text-2xl">{reward.title}</strong>
-            <span className="mt-3 block text-sm leading-relaxed text-parchment/65">
+            <strong className="mt-3 block font-display text-xl uppercase">{reward.title}</strong>
+            <span className="mt-2 block text-sm leading-relaxed text-parchment/65">
               {reward.description}
             </span>
           </motion.button>
@@ -274,7 +267,7 @@ export function ShopScreen({ run }: { run: RunState }) {
         {run.shop?.map((item) => (
           <div
             key={item.id}
-            className="flex items-center gap-4 rounded-2xl border border-parchment/12 bg-panel p-4"
+            className="flex items-center gap-4 border border-parchment/20 bg-panel p-3"
           >
             <div className="min-w-0 flex-1">
               <strong className="block text-lg">{item.title}</strong>
@@ -314,7 +307,7 @@ export function EventScreen({ run }: { run: RunState }) {
           <button
             key={option.id}
             onClick={() => dispatch({ type: "EVENT_OPTION_SELECTED", optionId: option.id })}
-            className="min-h-32 rounded-2xl border border-yellow-500/25 bg-panel p-4 text-left transition hover:-translate-y-1 hover:border-yellow-400 sm:min-h-40 sm:p-5"
+            className="min-h-28 border border-gold/30 bg-panel p-4 text-left transition-colors hover:border-gold hover:bg-[#24231f] sm:min-h-36"
           >
             <strong className="font-display text-xl">{option.label}</strong>
             <span className="mt-3 block text-sm leading-relaxed text-parchment/65">
@@ -337,7 +330,7 @@ export function RestScreen({ run }: { run: RunState }) {
       description="The ticking fades. For a moment, there is time to breathe."
       narrow
     >
-      <div className="mx-auto max-w-md rounded-2xl border border-mint/25 bg-panel p-7 text-center">
+      <div className="mx-auto max-w-md border border-mint/35 bg-panel p-6 text-center">
         <div className="text-5xl">♥</div>
         <p className="mt-4 text-xl font-black text-mint">Recover {healing} health</p>
         <p className="mt-2 text-sm text-parchment/55">
@@ -358,7 +351,7 @@ export function UpgradeScreen() {
       <div className="grid gap-4 sm:grid-cols-2">
         <button
           onClick={() => dispatch({ type: "UPGRADE_SELECTED", upgrade: "max-hp" })}
-          className="min-h-36 rounded-2xl border border-yellow-500/25 bg-panel p-4 text-left transition hover:-translate-y-1 hover:border-yellow-400 sm:min-h-48 sm:p-6"
+          className="min-h-32 border border-gold/30 bg-panel p-4 text-left transition-colors hover:border-gold hover:bg-[#24231f] sm:min-h-44 sm:p-5"
         >
           <span className="text-3xl text-yellow-400">♥+</span>
           <strong className="mt-4 block font-display text-2xl">Stronger Nerves</strong>
@@ -368,7 +361,7 @@ export function UpgradeScreen() {
         </button>
         <button
           onClick={() => dispatch({ type: "UPGRADE_SELECTED", upgrade: "focus" })}
-          className="min-h-36 rounded-2xl border border-gold/25 bg-panel p-4 text-left transition hover:-translate-y-1 hover:border-gold sm:min-h-48 sm:p-6"
+          className="min-h-32 border border-gold/30 bg-panel p-4 text-left transition-colors hover:border-gold hover:bg-[#24231f] sm:min-h-44 sm:p-5"
         >
           <span className="text-3xl text-gold">◷+</span>
           <strong className="mt-4 block font-display text-2xl">Clearer Thinking</strong>
@@ -384,19 +377,19 @@ export function UpgradeScreen() {
 export function EndScreen({ run, victory }: { run: RunState; victory: boolean }) {
   const dispatch = useGameStore((state) => state.dispatch);
   return (
-    <section className="flex min-h-dvh items-center px-4 py-12 text-center">
+    <section className="flex h-full items-center overflow-hidden px-4 py-6 text-center">
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         className="mx-auto max-w-xl"
       >
-        <div className={`text-7xl ${victory ? "text-gold" : "text-coral"}`}>
+        <div className={`font-display text-5xl ${victory ? "text-gold" : "text-coral"}`}>
           {victory ? "★" : "×"}
         </div>
         <p className="mt-5 text-xs font-black uppercase tracking-[0.35em] text-parchment/45">
           Seed {run.seed}
         </p>
-        <h1 className="mt-3 font-display text-5xl font-black sm:text-7xl">
+        <h1 className="mt-3 font-display text-4xl font-bold uppercase sm:text-6xl">
           {victory ? "Clock stopped" : "Time's up"}
         </h1>
         <p className="mx-auto mt-5 max-w-md text-lg text-parchment/65">

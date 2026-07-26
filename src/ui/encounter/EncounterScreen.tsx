@@ -63,14 +63,17 @@ function DamageGuide() {
   return (
     <section
       aria-label="Damage guide"
-      className="mt-2 rounded-xl border border-gold/20 bg-gold/5 p-2 lg:mt-3 lg:rounded-2xl lg:p-3"
+      className="mt-2 border border-gold/25 bg-[#171611] p-2 lg:mt-3 lg:p-3"
     >
       <p className="mb-1.5 text-[9px] font-black uppercase tracking-widest text-gold lg:text-[10px]">
         Accuracy → base power
       </p>
       <div className="grid grid-cols-4 gap-1 lg:grid-cols-2">
         {tiers.map(([label, damage]) => (
-          <div key={label} className="rounded-md bg-ink/40 px-1 py-1.5 text-center lg:text-left">
+          <div
+            key={label}
+            className="border border-parchment/10 bg-ink/40 px-1 py-1.5 text-center lg:text-left"
+          >
             <span className="block text-[8px] font-bold text-parchment/55 lg:text-[9px]">
               {label}
             </span>
@@ -97,7 +100,7 @@ function HealthBar({
   const percentage = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
   return (
     <div
-      className="h-2.5 overflow-hidden rounded-full bg-ink/70"
+      className="h-2.5 overflow-hidden border border-parchment/15 bg-ink/70"
       role="progressbar"
       aria-valuenow={value}
       aria-valuemax={max}
@@ -143,7 +146,7 @@ function PuzzleTimer({ run, paused }: { run: RunState; paused: boolean }) {
       >
         {paused ? "Ⅱ" : Math.ceil(remaining)}
       </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/70">
+      <div className="mt-1 h-1.5 overflow-hidden border border-parchment/15 bg-ink/70">
         <div
           className={`h-full transition-[width] duration-100 ${urgent ? "bg-coral" : "bg-gold"}`}
           style={{ width: `${(remaining / total) * 100}%` }}
@@ -173,7 +176,7 @@ function ConsumableTray({ run }: { run: RunState }) {
               key={index}
               disabled={!consumable || run.encounter?.status !== "puzzle"}
               onClick={() => setDialogSlot(index)}
-              className="flex min-h-16 min-w-0 flex-col items-center justify-center rounded-xl border border-parchment/12 bg-ink/40 px-1.5 py-2 text-[10px] font-bold leading-tight text-parchment/70 transition hover:border-mint/50 hover:text-mint disabled:opacity-30 sm:text-xs lg:min-h-11 lg:flex-row lg:justify-start lg:gap-2 lg:px-3 lg:text-left"
+              className="flex min-h-16 min-w-0 flex-col items-center justify-center border border-parchment/15 bg-ink/40 px-1.5 py-2 text-[10px] font-bold leading-tight text-parchment/70 transition-colors hover:border-mint hover:text-mint disabled:opacity-30 sm:text-xs lg:min-h-11 lg:flex-row lg:justify-start lg:gap-2 lg:px-3 lg:text-left"
               aria-label={
                 consumable ? `Use ${consumable.name}` : `Empty consumable slot ${index + 1}`
               }
@@ -191,14 +194,14 @@ function ConsumableTray({ run }: { run: RunState }) {
       <Dialog.Root open={dialogSlot !== null} onOpenChange={(open) => !open && setDialogSlot(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-mint/25 bg-panel p-6 shadow-2xl focus:outline-none">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 border border-mint/40 bg-panel p-5 focus:outline-none">
             <Dialog.Title className="font-display text-3xl font-black">
               {selected?.name ?? "Empty slot"}
             </Dialog.Title>
             <Dialog.Description className="mt-3 text-parchment/65">
               {selected?.description ?? "There is nothing to use here."}
             </Dialog.Description>
-            <p className="mt-4 rounded-lg bg-mint/10 px-3 py-2 text-sm font-bold text-mint">
+            <p className="mt-4 border border-mint/20 bg-mint/10 px-3 py-2 text-sm font-bold text-mint">
               Timer paused while this dialog is open.
             </p>
             <div className="mt-6 flex gap-3">
@@ -249,20 +252,20 @@ function RoundResolution({ run }: { run: RunState }) {
     <motion.section
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`rounded-2xl border p-4 text-center sm:p-6 ${won ? "border-yellow-500/50 bg-yellow-500/8" : "border-zinc-600 bg-zinc-900"}`}
+      className={`border p-4 text-center sm:p-5 ${won ? "border-gold/60 bg-gold/8" : "border-parchment/25 bg-ink"}`}
     >
       <p className="text-[10px] font-black uppercase tracking-[0.25em] text-yellow-500 sm:text-xs">
         Puzzle {encounter.roundIndex} resolved
       </p>
       <h2 className="mt-2 font-display text-3xl font-black sm:text-4xl">{outcome}</h2>
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <div className="rounded-xl border border-zinc-700 bg-zinc-950/70 p-2 sm:p-3">
+        <div className="border border-parchment/20 bg-ink/70 p-2 sm:p-3">
           <span className="block text-[9px] font-bold uppercase tracking-wider text-zinc-500">
             Answer
           </span>
           <strong className="mt-1 block text-xl sm:text-2xl">{submitted ?? "—"}</strong>
         </div>
-        <div className="rounded-xl border border-zinc-700 bg-zinc-950/70 p-2 sm:p-3">
+        <div className="border border-parchment/20 bg-ink/70 p-2 sm:p-3">
           <span className="block text-[9px] font-bold uppercase tracking-wider text-zinc-500">
             Distance
           </span>
@@ -270,7 +273,7 @@ function RoundResolution({ run }: { run: RunState }) {
             {distance === 0 ? "Exact" : (distance ?? "—")}
           </strong>
         </div>
-        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-2 sm:p-3">
+        <div className="border border-gold/40 bg-gold/10 p-2 sm:p-3">
           <span className="block text-[9px] font-bold uppercase tracking-wider text-yellow-500/70">
             HP lost
           </span>
@@ -281,7 +284,7 @@ function RoundResolution({ run }: { run: RunState }) {
       </div>
       <div
         aria-label="Damage calculation"
-        className="mt-3 rounded-xl border border-gold/25 bg-gold/5 p-3 text-left text-xs sm:mt-4 sm:p-4 sm:text-sm"
+        className="mt-3 border border-gold/25 bg-gold/5 p-3 text-left text-xs sm:mt-4 sm:p-4 sm:text-sm"
       >
         <span className="mb-2 block text-[9px] font-black uppercase tracking-wider text-gold">
           How damage was calculated
@@ -304,7 +307,7 @@ function RoundResolution({ run }: { run: RunState }) {
           {round.hpDamage < afterArmor ? ` (enemy only had ${round.enemyHpBefore} HP)` : ""}
         </p>
       </div>
-      <div className="mt-3 rounded-xl border border-zinc-700 bg-zinc-950/70 p-3 text-left text-xs text-zinc-300 sm:mt-4 sm:p-4 sm:text-sm">
+      <div className="mt-3 border border-parchment/20 bg-ink/70 p-3 text-left text-xs text-parchment/70 sm:mt-4 sm:p-4 sm:text-sm">
         <span className="mb-1 block text-[9px] font-black uppercase tracking-wider text-zinc-500">
           Enemy response
         </span>
@@ -360,7 +363,7 @@ function PuzzleProgress({ run }: { run: RunState }) {
                     ? `Puzzle ${puzzleNumber}: current`
                     : `Puzzle ${puzzleNumber}: remaining`
               }
-              className={`grid size-6 place-items-center rounded-md border text-[9px] font-black sm:size-7 sm:text-[10px] ${attempt?.outcome === "solved" ? "border-yellow-500 bg-yellow-500 text-zinc-950" : attempt?.outcome === "partial" ? "border-yellow-500/50 bg-yellow-500/10 text-yellow-300" : attempt?.outcome === "failed" ? "border-red-400/50 bg-red-400/10 text-red-300" : current ? "border-white bg-white text-zinc-950 ring-2 ring-white/15" : "border-zinc-700 bg-zinc-900 text-zinc-600"}`}
+              className={`grid size-6 place-items-center border text-[9px] font-black sm:size-7 sm:text-[10px] ${attempt?.outcome === "solved" ? "border-gold bg-gold text-ink" : attempt?.outcome === "partial" ? "border-gold/50 bg-gold/10 text-gold" : attempt?.outcome === "failed" ? "border-coral/50 bg-coral/10 text-coral" : current ? "border-parchment bg-parchment text-ink" : "border-parchment/20 bg-ink text-parchment/30"}`}
             >
               {symbol}
             </span>
@@ -404,12 +407,6 @@ function CombatImpact({ run }: { run: RunState }) {
       exit={{ opacity: 0, scale: 1.04 }}
       className="relative flex h-full min-h-0 flex-col items-center justify-center overflow-hidden text-center"
     >
-      <motion.div
-        aria-hidden="true"
-        animate={{ opacity: [0.1, 0.3, 0.1], scale: [0.9, 1.08, 0.9] }}
-        transition={{ duration: 2.2, repeat: Number.POSITIVE_INFINITY }}
-        className="absolute size-72 rounded-full border border-yellow-500/15 shadow-[0_0_80px_rgba(234,179,8,0.08)]"
-      />
       <motion.p
         initial={{ opacity: 0, letterSpacing: "0.1em" }}
         animate={{ opacity: 1, letterSpacing: "0.35em" }}
@@ -422,9 +419,9 @@ function CombatImpact({ run }: { run: RunState }) {
         <motion.div
           animate={{
             borderColor: phase === 0 ? "#eab308" : "#52525b",
-            y: phase === 0 ? -4 : 0,
+            y: 0,
           }}
-          className="rounded-xl border bg-zinc-950/90 p-2 sm:rounded-2xl sm:p-4"
+          className="border bg-ink p-2 sm:p-4"
         >
           <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 sm:text-[10px]">
             01 · Answer
@@ -437,10 +434,10 @@ function CombatImpact({ run }: { run: RunState }) {
         <motion.div
           animate={{
             borderColor: phase === 1 ? "#eab308" : phase > 1 ? "#52525b" : "#3f3f46",
-            y: phase === 1 ? -4 : 0,
+            y: 0,
             opacity: phase >= 1 ? 1 : 0.35,
           }}
-          className="rounded-xl border bg-zinc-950/90 p-2 sm:rounded-2xl sm:p-4"
+          className="border bg-ink p-2 sm:p-4"
         >
           <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 sm:text-[10px]">
             02 · Accuracy
@@ -472,10 +469,10 @@ function CombatImpact({ run }: { run: RunState }) {
         <motion.div
           animate={{
             borderColor: phase === 2 ? "#eab308" : phase > 2 ? "#52525b" : "#3f3f46",
-            y: phase === 2 ? -4 : 0,
+            y: 0,
             opacity: phase >= 2 ? 1 : 0.35,
           }}
-          className="rounded-xl border bg-zinc-950/90 p-2 sm:rounded-2xl sm:p-4"
+          className="border bg-ink p-2 sm:p-4"
         >
           <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 sm:text-[10px]">
             03 · Power
@@ -491,7 +488,7 @@ function CombatImpact({ run }: { run: RunState }) {
         </motion.div>
       </div>
 
-      <div className="relative mt-3 h-1.5 w-full max-w-xl overflow-hidden rounded-full bg-zinc-800 sm:mt-5">
+      <div className="relative mt-3 h-1.5 w-full max-w-xl overflow-hidden border border-parchment/15 bg-ink sm:mt-5">
         <motion.div
           initial={{ scaleX: 0 }}
           animate={{ scaleX: phase >= 3 ? 1 : (phase + 1) / 4 }}
@@ -637,15 +634,14 @@ function EncounterIntro({ run, onComplete }: { run: RunState; onComplete: () => 
       <motion.section
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative grid h-full max-h-[610px] w-full max-w-4xl min-h-0 overflow-hidden rounded-2xl border border-coral/30 bg-panel shadow-[0_24px_90px_rgba(0,0,0,0.5)] lg:grid-cols-[minmax(0,1fr)_340px]"
+        className="relative grid h-full max-h-[610px] w-full max-w-4xl min-h-0 overflow-hidden border border-coral/45 bg-panel lg:grid-cols-[minmax(0,1fr)_320px]"
       >
-        <div className="relative min-h-0 overflow-hidden bg-[radial-gradient(circle_at_50%_42%,rgba(248,113,113,0.2),rgba(24,24,27,0.45)_48%,rgba(9,9,11,0.98)_82%)]">
-          <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(circle_at_center,black,transparent_78%)]" />
+        <div className="relative min-h-0 overflow-hidden bg-[#11110f]">
+          <div className="absolute inset-x-0 top-0 border-t-8 border-coral/20" />
           <motion.div
-            initial={{ opacity: 0, scale: 0.4 }}
-            animate={{ opacity: [0, 0.65, 0.25], scale: [0.4, 1.15, 1] }}
-            transition={{ duration: 0.7 }}
-            className="absolute left-1/2 top-1/2 size-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-coral/40 shadow-[0_0_90px_rgba(248,113,113,0.25)] lg:size-80"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.45 }}
+            className="absolute inset-5 border border-coral/20"
           />
           <div className="absolute bottom-[12%] left-1/2 h-10 w-2/3 -translate-x-1/2 rounded-[50%] bg-black/80 blur-xl" />
           <motion.img
@@ -654,12 +650,12 @@ function EncounterIntro({ run, onComplete }: { run: RunState; onComplete: () => 
             initial={{ opacity: 0, x: 90, scale: 0.78 }}
             animate={{ opacity: 1, x: 0, scale: [0.78, 1.04, 1] }}
             transition={{ delay: 0.15, duration: 0.75, ease: "easeOut" }}
-            className="absolute bottom-0 left-1/2 h-[108%] w-auto max-w-none -translate-x-1/2 object-contain drop-shadow-[0_18px_18px_rgba(0,0,0,0.7)] lg:h-[96%]"
+            className="absolute bottom-0 left-1/2 h-[108%] w-auto max-w-none -translate-x-1/2 object-contain lg:h-[96%]"
           />
           <motion.p
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute left-3 top-3 rounded-md border border-coral/25 bg-ink/80 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.22em] text-coral backdrop-blur sm:left-5 sm:top-5 sm:text-[10px]"
+            className="absolute left-3 top-3 border border-coral/40 bg-ink px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-coral sm:left-5 sm:top-5 sm:text-[10px]"
           >
             Incoming opponent
           </motion.p>
@@ -669,24 +665,24 @@ function EncounterIntro({ run, onComplete }: { run: RunState; onComplete: () => 
           initial={{ opacity: 0, x: 28 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.45, duration: 0.5 }}
-          className="relative flex flex-col justify-center border-t border-coral/20 bg-ink/65 p-4 backdrop-blur lg:border-l lg:border-t-0 lg:p-6"
+          className="relative flex flex-col justify-center border-t border-coral/30 bg-ink p-4 lg:border-l lg:border-t-0 lg:p-5"
         >
           <div className="flex items-center gap-2">
-            <span className="rounded-md bg-coral/15 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-coral">
+            <span className="border border-coral/30 bg-coral/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-coral">
               {encounter.type} encounter
             </span>
             <span className="text-[9px] font-bold uppercase tracking-wider text-parchment/35">
               {encounter.maxRounds} puzzles
             </span>
           </div>
-          <h1 className="mt-2 font-display text-3xl font-black leading-none sm:text-4xl">
+          <h1 className="mt-2 font-display text-3xl font-bold uppercase leading-none sm:text-4xl">
             {encounter.enemy.name}
           </h1>
           <p className="mt-1 text-xs italic text-parchment/50 sm:text-sm">
             {encounter.enemy.epithet}
           </p>
 
-          <div className="mt-3 grid grid-cols-[70px_minmax(0,1fr)] gap-2 rounded-xl border border-parchment/10 bg-panel/80 p-3">
+          <div className="mt-3 grid grid-cols-[70px_minmax(0,1fr)] gap-2 border border-parchment/20 bg-panel p-3">
             <div>
               <span className="block text-[8px] font-black uppercase tracking-widest text-parchment/35">
                 Health
@@ -707,7 +703,7 @@ function EncounterIntro({ run, onComplete }: { run: RunState; onComplete: () => 
           </div>
 
           {enemyDefinition?.passive && (
-            <p className="mt-2 rounded-lg border border-mint/20 bg-mint/8 px-3 py-2 text-[10px] leading-snug text-mint">
+            <p className="mt-2 border border-mint/25 bg-mint/8 px-3 py-2 text-[10px] leading-snug text-mint">
               <strong>{enemyDefinition.passive.name}</strong> ·{" "}
               {enemyDefinition.passive.description}
             </p>
@@ -872,11 +868,11 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
             : { x: 0, filter: "brightness(1)" }
         }
         transition={{ delay: 3.42, duration: 0.52 }}
-        className="relative overflow-hidden rounded-xl border border-coral/30 bg-panel p-2 shadow-[0_18px_55px_rgba(0,0,0,0.3)] lg:col-start-3 lg:row-start-1 lg:rounded-2xl lg:p-3"
+        className="relative overflow-hidden border border-coral/40 bg-panel p-2 lg:col-start-3 lg:row-start-1 lg:p-3"
       >
         <div className="grid grid-cols-[72px_minmax(0,1fr)_104px] items-center gap-2 lg:block">
-          <div className="relative h-[72px] overflow-hidden rounded-lg border border-coral/20 bg-[radial-gradient(circle_at_50%_38%,rgba(248,113,113,0.2),rgba(24,24,27,0.35)_55%,rgba(9,9,11,0.95)_100%)] lg:h-56 lg:rounded-xl">
-            <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+          <div className="relative h-[72px] overflow-hidden border border-coral/30 bg-[#11110f] lg:h-56">
+            <div className="absolute inset-2 border border-coral/10" />
             <div className="absolute left-1/2 top-[70%] h-5 w-3/4 -translate-x-1/2 rounded-[50%] bg-black/70 blur-md lg:h-9" />
             <motion.img
               src={enemyPortraitUrl(encounter.enemy.enemyId)}
@@ -891,12 +887,12 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
                 repeat: encounter.enemy.hp > 0 ? Infinity : 0,
                 ease: "easeInOut",
               }}
-              className="absolute bottom-0 left-1/2 h-[132%] w-auto max-w-none -translate-x-1/2 object-contain drop-shadow-[0_12px_12px_rgba(0,0,0,0.65)] lg:h-[122%]"
+              className="absolute bottom-0 left-1/2 h-[132%] w-auto max-w-none -translate-x-1/2 object-contain lg:h-[122%]"
             />
-            <span className="absolute left-1.5 top-1.5 rounded-md border border-coral/25 bg-ink/75 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest text-coral backdrop-blur lg:left-2 lg:top-2 lg:px-2 lg:py-1 lg:text-[9px]">
+            <span className="absolute left-1.5 top-1.5 border border-coral/30 bg-ink px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wider text-coral lg:left-2 lg:top-2 lg:px-2 lg:py-1 lg:text-[9px]">
               {encounter.type}
             </span>
-            <span className="absolute bottom-1 right-1 rounded-full border border-white/10 bg-ink/75 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wider text-parchment/45 lg:bottom-2 lg:right-2 lg:text-[8px]">
+            <span className="absolute bottom-1 right-1 border border-parchment/15 bg-ink px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wider text-parchment/45 lg:bottom-2 lg:right-2 lg:text-[8px]">
               Opponent
             </span>
           </div>
@@ -931,8 +927,8 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
           </div>
         </div>
 
-        <div className="mt-1.5 grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-gold/25 bg-gold/8 px-2 py-1.5 lg:mt-3 lg:grid-cols-[36px_minmax(0,1fr)] lg:rounded-xl lg:p-3">
-          <span className="grid size-7 place-items-center rounded-md bg-gold text-sm font-black text-ink lg:row-span-2 lg:size-9 lg:text-lg">
+        <div className="mt-1.5 grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 border border-gold/30 bg-gold/8 px-2 py-1.5 lg:mt-3 lg:grid-cols-[36px_minmax(0,1fr)] lg:p-3">
+          <span className="grid size-7 place-items-center border border-gold bg-gold text-sm font-black text-ink lg:row-span-2 lg:size-9 lg:text-lg">
             {intentGlyph(encounter.enemy.currentIntent.type)}
           </span>
           <div className="min-w-0">
@@ -948,14 +944,14 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
           </span>
         </div>
         {enemyDefinition?.passive && (
-          <div className="mt-1 rounded-lg border border-mint/20 bg-mint/8 px-2 py-1 text-[9px] leading-tight text-mint lg:mt-2 lg:px-3 lg:py-2 lg:text-xs">
+          <div className="mt-1 border border-mint/25 bg-mint/8 px-2 py-1 text-[9px] leading-tight text-mint lg:mt-2 lg:px-3 lg:py-2 lg:text-xs">
             <span className="mr-1 font-black uppercase tracking-wider">Passive</span>
             <strong>{enemyDefinition.passive.name}</strong> · {enemyDefinition.passive.description}
           </div>
         )}
       </motion.aside>
 
-      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-parchment/12 bg-panel/80 p-2 sm:p-3 lg:col-start-2 lg:row-start-1 lg:rounded-2xl lg:p-4">
+      <section className="flex min-h-0 flex-col overflow-hidden border border-parchment/25 bg-panel p-2 sm:p-3 lg:col-start-2 lg:row-start-1 lg:p-4">
         <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
           <PuzzleProgress run={run} />
           <div className="min-w-24 border border-gold/35 bg-gold px-5 py-2.5 text-center text-ink shadow-[0_8px_24px_rgba(234,179,8,0.16)] sm:min-w-32 sm:px-7 sm:py-3">
@@ -1033,7 +1029,7 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
                         });
                         audioManager.play("operator-selected");
                       }}
-                      className={`relative size-10 shrink-0 rounded-full border text-xl font-black transition sm:size-12 lg:size-14 lg:text-2xl ${puzzle.selectedOperator === operator.value ? "border-gold bg-gold text-ink" : "border-parchment/15 bg-parchment/10 hover:border-gold/50"}`}
+                      className={`relative size-10 shrink-0 border text-xl font-black transition-colors sm:size-12 lg:size-14 lg:text-2xl ${puzzle.selectedOperator === operator.value ? "border-gold bg-gold text-ink" : "border-parchment/20 bg-ink hover:border-gold"}`}
                     >
                       {operator.symbol}
                       <span className="absolute bottom-0.5 right-2 text-[8px] opacity-40">
@@ -1066,7 +1062,7 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
                         <div className="grid min-h-10 place-items-center border border-parchment/15 bg-parchment/10 px-1 font-display text-lg font-black sm:min-h-11 sm:text-xl">
                           {puzzle.tiles[operation.leftTileId]?.value}
                         </div>
-                        <div className="grid size-9 place-items-center justify-self-center rounded-full bg-parchment/12 text-lg font-black">
+                        <div className="grid size-9 place-items-center justify-self-center border border-parchment/15 bg-ink text-lg font-black">
                           {operatorSymbol(operation.operator)}
                         </div>
                         <div className="grid min-h-10 place-items-center border border-parchment/15 bg-parchment/10 px-1 font-display text-lg font-black sm:min-h-11 sm:text-xl">
@@ -1103,7 +1099,7 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
                               action: { type: "LAST_OPERATION_UNDONE" },
                             })
                           }
-                          className="grid size-9 place-items-center rounded-full text-lg text-coral transition hover:bg-coral/10 disabled:cursor-not-allowed disabled:opacity-20"
+                          className="grid size-9 place-items-center border border-transparent text-lg text-coral transition-colors hover:border-coral/40 hover:bg-coral/10 disabled:cursor-not-allowed disabled:opacity-20"
                         >
                           ♲
                         </button>
@@ -1118,7 +1114,7 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
                     <div className="grid min-h-10 place-items-center border border-dashed border-parchment/25 bg-ink/20 px-1 font-display text-lg font-black sm:min-h-11 sm:text-xl">
                       {selected[0] ? puzzle.tiles[selected[0]]?.value : ""}
                     </div>
-                    <div className="grid size-9 place-items-center justify-self-center rounded-full border border-parchment/20 text-lg font-black text-gold">
+                    <div className="grid size-9 place-items-center justify-self-center border border-parchment/20 text-lg font-black text-gold">
                       {puzzle.selectedOperator ? operatorSymbol(puzzle.selectedOperator) : ""}
                     </div>
                     <div className="grid min-h-10 place-items-center border border-dashed border-parchment/25 bg-ink/20 px-1 font-display text-lg font-black sm:min-h-11 sm:text-xl">
@@ -1157,7 +1153,7 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
                   </GameButton>
                 </div>
 
-                <div className="mt-2 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-lg bg-ink/35 px-3 py-2 text-xs sm:text-sm lg:mt-3">
+                <div className="mt-2 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border border-parchment/15 bg-ink/35 px-3 py-2 text-xs sm:text-sm lg:mt-3">
                   <span className="text-parchment/55">
                     {puzzle.closestResult ? "Closest" : "Next step"}
                   </span>
@@ -1187,7 +1183,7 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
       </section>
 
       <aside aria-label="Consumables and damage guide" className="lg:col-start-1 lg:row-start-1">
-        <section className="rounded-xl border border-parchment/12 bg-panel p-2 lg:rounded-2xl lg:p-4">
+        <section className="border border-parchment/25 bg-panel p-2 lg:p-4">
           <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-parchment/45 lg:mb-3 lg:text-xs">
             Consumables
           </p>

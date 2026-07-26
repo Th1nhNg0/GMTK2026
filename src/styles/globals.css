@@ -1,14 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #18181b;
-  --color-panel: #27272a;
-  --color-parchment: #ffffff;
-  --color-gold: #eab308;
-  --color-coral: #f87171;
-  --color-mint: #facc15;
-  --font-display: "Arial Black", "Trebuchet MS", system-ui, sans-serif;
-  --font-sans: "Trebuchet MS", ui-rounded, system-ui, sans-serif;
+  --color-ink: #0f0f0d;
+  --color-panel: #1b1a17;
+  --color-parchment: #e5dcc4;
+  --color-gold: #c6a75a;
+  --color-coral: #b9685f;
+  --color-mint: #8f9e72;
+  --font-display: "Courier New", "Lucida Console", monospace;
+  --font-sans: Tahoma, Verdana, Arial, sans-serif;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
 }
 
 :root {
@@ -16,7 +22,7 @@
   font-family: var(--font-sans);
   background: var(--color-ink);
   font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  text-rendering: optimizeSpeed;
 }
 
 * {
@@ -33,6 +39,14 @@ body,
 body {
   margin: 0;
   min-width: 0;
+  background-color: var(--color-ink);
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgb(255 255 255 / 0.015) 0,
+    rgb(255 255 255 / 0.015) 1px,
+    transparent 1px,
+    transparent 4px
+  );
 }
 
 button,
@@ -42,8 +56,17 @@ select {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-gold);
-  outline-offset: 3px;
+  outline: 2px solid var(--color-gold);
+  outline-offset: 1px;
+}
+
+/* Keep the interface closer to an old PC game than a glassy dashboard. */
+[class*="shadow-"] {
+  box-shadow: none !important;
+}
+
+[class*="backdrop-blur"] {
+  backdrop-filter: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
