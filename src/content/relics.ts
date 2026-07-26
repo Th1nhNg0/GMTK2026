@@ -1,0 +1,68 @@
+import type { RelicDefinition } from "../game/content/types";
+
+export const RELICS: RelicDefinition[] = [
+  {
+    id: "sharp-pencil",
+    name: "Sharp Pencil",
+    description: "+2 damage on exact answers.",
+    rarity: "common",
+    stackable: false,
+    effects: [{ type: "exact-bonus", amount: 2 }],
+  },
+  {
+    id: "brass-abacus",
+    name: "Brass Abacus",
+    description: "+1 damage whenever you deal damage.",
+    rarity: "common",
+    stackable: false,
+    effects: [{ type: "damage-bonus", amount: 1 }],
+  },
+  {
+    id: "margin-notes",
+    name: "Margin Notes",
+    description: "Deal 3 damage when 11–15 away.",
+    rarity: "uncommon",
+    stackable: false,
+    effects: [{ type: "close-call", maxDistance: 15, damage: 3 }],
+  },
+  {
+    id: "book-cover",
+    name: "Padded Book Cover",
+    description: "Take 1 less attack damage.",
+    rarity: "common",
+    stackable: false,
+    effects: [{ type: "incoming-reduction", amount: 1 }],
+  },
+  {
+    id: "slide-rule",
+    name: "Ivory Slide Rule",
+    description: "Start each encounter with 4 armor.",
+    rarity: "uncommon",
+    stackable: false,
+    effects: [{ type: "start-armor", amount: 4 }],
+  },
+  {
+    id: "lucky-seven",
+    name: "Lucky Seven",
+    description: "+2 damage when your answer is divisible by 7.",
+    rarity: "uncommon",
+    stackable: false,
+    effects: [{ type: "divisible-by-seven-bonus", amount: 2 }],
+  },
+  {
+    id: "opening-statement",
+    name: "Opening Statement",
+    description: "+3 damage in the first puzzle of combat.",
+    rarity: "rare",
+    stackable: false,
+    effects: [{ type: "first-round-bonus", amount: 3 }],
+  },
+  {
+    id: "coin-counter",
+    name: "Coin Counter",
+    description: "Gain 5 extra coins after combat.",
+    rarity: "rare",
+    stackable: false,
+    effects: [{ type: "currency-bonus", amount: 5 }],
+  },
+];
