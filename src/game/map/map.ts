@@ -1,5 +1,4 @@
 import type { RngState } from "../rng";
-import { randomInt } from "../rng";
 import type { MapNode, MapNodeType, RunMap } from "../run/types";
 
 const ROW_PATTERNS: MapNodeType[][] = [
@@ -16,16 +15,14 @@ const ROW_PATTERNS: MapNodeType[][] = [
 ];
 
 export function generateMap(rng: RngState): { map: RunMap; rng: RngState } {
-  let nextRng = rng;
+  const nextRng = rng;
   const nodes: MapNode[] = [];
 
   for (let row = 0; row < ROW_PATTERNS.length; row += 1) {
     const pattern = ROW_PATTERNS[row];
     if (!pattern) continue;
-    const rotation = randomInt(nextRng, 0, 2);
-    nextRng = rotation.rng;
     for (let column = 0; column < 3; column += 1) {
-      const type = pattern[(column + rotation.value) % pattern.length] as MapNodeType;
+      const type = pattern[column] as MapNodeType;
       nodes.push({
         id: `node-${row}-${column}`,
         row,

@@ -4,6 +4,7 @@ export function createPuzzle(
   puzzleId: string,
   target: number,
   sourceTiles: readonly SourceTileInput[],
+  minimumOperations = 0,
 ): PuzzleState {
   if (!puzzleId.trim()) {
     throw new Error("Puzzle ID is required");
@@ -35,6 +36,7 @@ export function createPuzzle(
   return {
     puzzleId,
     target,
+    minimumOperations,
     sourceTileIds: sourceTiles.map((tile) => tile.tileId),
     tiles,
     operations: [],

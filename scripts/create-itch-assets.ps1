@@ -19,11 +19,11 @@ function New-BrandImage {
   $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
   $graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
 
-  $ink = [System.Drawing.ColorTranslator]::FromHtml("#12101c")
-  $panel = [System.Drawing.ColorTranslator]::FromHtml("#211d31")
-  $paper = [System.Drawing.ColorTranslator]::FromHtml("#f5eedf")
-  $gold = [System.Drawing.ColorTranslator]::FromHtml("#f3b83b")
-  $coral = [System.Drawing.ColorTranslator]::FromHtml("#ef6a5b")
+  $ink = [System.Drawing.ColorTranslator]::FromHtml("#18181b")
+  $panel = [System.Drawing.ColorTranslator]::FromHtml("#27272a")
+  $paper = [System.Drawing.ColorTranslator]::FromHtml("#ffffff")
+  $gold = [System.Drawing.ColorTranslator]::FromHtml("#eab308")
+  $coral = [System.Drawing.ColorTranslator]::FromHtml("#facc15")
   $grid = [System.Drawing.Color]::FromArgb(16, 245, 238, 223)
 
   $graphics.Clear($ink)

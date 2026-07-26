@@ -46,6 +46,7 @@ export interface PuzzleResolution {
 export interface PuzzleState {
   puzzleId: string;
   target: number;
+  minimumOperations: number;
   sourceTileIds: string[];
   tiles: Record<string, NumberTile>;
   operations: Operation[];

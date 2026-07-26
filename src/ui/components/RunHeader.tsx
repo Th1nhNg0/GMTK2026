@@ -23,14 +23,26 @@ export function RunHeader({ run }: RunHeaderProps) {
           ♥ {run.hp}/{run.maxHp}
         </div>
         {run.armor > 0 && (
-          <div className="rounded-lg bg-sky-400/15 px-3 py-2 font-black text-sky-300">
+          <div className="rounded-lg bg-white/10 px-3 py-2 font-black text-zinc-200">
             ◆ {run.armor}
           </div>
         )}
+        {run.weakenedBy > 0 && (
+          <div className="rounded-lg bg-red-400/12 px-3 py-2 font-black text-red-300">
+            −{run.weakenedBy} next hit
+          </div>
+        )}
+        {run.doubleNextDamage && (
+          <div className="rounded-lg bg-yellow-500/12 px-3 py-2 font-black text-yellow-400">
+            ×2 next hit
+          </div>
+        )}
         <div className="rounded-lg bg-gold/12 px-3 py-2 font-black text-gold">● {run.currency}</div>
-        <div className="hidden rounded-lg bg-parchment/8 px-3 py-2 text-parchment/70 sm:block">
-          Bag {run.numberBag.length}
-        </div>
+        {run.focusBonusSeconds > 0 && (
+          <div className="rounded-lg bg-mint/10 px-3 py-2 font-black text-mint">
+            +{run.focusBonusSeconds}s
+          </div>
+        )}
         {run.relicIds.length > 0 && (
           <div
             className="hidden max-w-xs truncate rounded-lg bg-mint/10 px-3 py-2 text-mint md:block"

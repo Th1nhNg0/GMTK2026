@@ -132,15 +132,7 @@ const NODE_PRIORITY: MapNodeType[] = [
   "boss",
 ];
 
-const REWARD_PRIORITY: RewardKind[] = [
-  "relic",
-  "heal",
-  "consumable",
-  "remove-number",
-  "transform-number",
-  "currency",
-  "add-number",
-];
+const REWARD_PRIORITY: RewardKind[] = ["relic", "heal", "consumable", "currency"];
 
 function chooseMapNode(state: GameState): GameState {
   const available = state.run!.map.nodes.filter((node) => node.status === "available");

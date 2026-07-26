@@ -8,7 +8,7 @@ export interface NumberCardDefinition {
   tags: string[];
 }
 
-export interface BagState {
+export interface NumberSequenceState {
   drawPile: string[];
   discardPile: string[];
 }
@@ -41,32 +41,40 @@ export interface EnemyState {
 
 export interface RoundResult {
   resolution: PuzzleResolution;
+  /** Attack power after bonuses and penalties, before enemy armor. */
   damageDealt: number;
+  armorBlocked: number;
+  /** Actual HP removed, capped by the enemy's remaining HP. */
+  hpDamage: number;
+  enemyHpBefore: number;
+  enemyHpAfter: number;
   enemyAction: string;
   playerDamageTaken: number;
+}
+
+export interface PuzzleAttempt {
+  puzzleNumber: number;
+  outcome: "solved" | "partial" | "failed";
+  submittedValue?: number;
+  distance?: number;
+  damageDealt: number;
 }
 
 export interface EncounterState {
   encounterId: string;
   type: EncounterType;
   roundIndex: number;
-  maxRounds: 3 | 4 | 5;
+  maxRounds: number;
+  roundHistory: PuzzleAttempt[];
   enemy: EnemyState;
-  bag: BagState;
+  numberSequence: NumberSequenceState;
   handCardIds: string[];
   puzzle: PuzzleState;
   status: "puzzle" | "resolved" | "won";
   lastRound?: RoundResult;
 }
 
-export type RewardKind =
-  | "add-number"
-  | "remove-number"
-  | "transform-number"
-  | "relic"
-  | "consumable"
-  | "currency"
-  | "heal";
+export type RewardKind = "relic" | "consumable" | "currency" | "heal";
 
 export interface RewardOption {
   id: string;
@@ -74,8 +82,6 @@ export interface RewardOption {
   title: string;
   description: string;
   value?: number;
-  cardId?: string;
-  newValue?: number;
   relicId?: string;
   consumableId?: string;
 }
@@ -92,7 +98,8 @@ export interface RunState {
   maxHp: number;
   armor: number;
   currency: number;
-  numberBag: NumberCardDefinition[];
+  numberSet: NumberCardDefinition[];
+  focusBonusSeconds: number;
   relicIds: string[];
   consumableSlots: Array<string | null>;
   doubleNextDamage: boolean;
@@ -136,7 +143,7 @@ export type GameAction =
   | { type: "SHOP_LEFT" }
   | { type: "EVENT_OPTION_SELECTED"; optionId: string }
   | { type: "REST_COMPLETED" }
-  | { type: "UPGRADE_SELECTED"; upgrade: "max-hp" | "refine" }
+  | { type: "UPGRADE_SELECTED"; upgrade: "max-hp" | "focus" }
   | { type: "DEBUG_ENCOUNTER_STARTED"; encounterType: EncounterType }
   | { type: "DEBUG_NODE_JUMPED"; nodeId: string }
   | { type: "DEBUG_EXACT_SETUP" }

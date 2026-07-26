@@ -21,15 +21,12 @@ export function TitleScreen() {
 
   return (
     <section className="relative flex h-full items-center overflow-hidden px-4 py-5 sm:py-8">
-      <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(245,238,223,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(245,238,223,0.04)_1px,transparent_1px),radial-gradient(circle_at_25%_20%,#f3b83b_0,transparent_24%),radial-gradient(circle_at_75%_75%,#ef6a5b_0,transparent_26%)] [background-size:32px_32px,32px_32px,auto,auto]" />
+      <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px),radial-gradient(circle_at_25%_20%,#eab308_0,transparent_24%),radial-gradient(circle_at_75%_75%,#facc15_0,transparent_24%)] [background-size:32px_32px,32px_32px,auto,auto]" />
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative mx-auto w-full max-w-3xl text-center"
       >
-        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.32em] text-gold sm:mb-3 sm:text-xs">
-          GMTK Game Jam 2026 · Countdown
-        </p>
         <h1 className="font-display text-5xl font-black uppercase leading-[0.82] tracking-[-0.06em] sm:text-7xl">
           Last Sum
           <br />
@@ -94,14 +91,14 @@ export function TitleScreen() {
   );
 }
 
-const NODE_META: Record<MapNodeType, { icon: string; label: string; color: string }> = {
-  normal: { icon: "±", label: "Encounter", color: "border-parchment/45 text-parchment" },
-  elite: { icon: "◆", label: "Elite", color: "border-coral/75 text-coral" },
-  boss: { icon: "★", label: "Boss", color: "border-gold text-gold" },
-  shop: { icon: "●", label: "Shop", color: "border-gold/75 text-gold" },
-  event: { icon: "?", label: "Event", color: "border-violet-400/75 text-violet-300" },
-  rest: { icon: "♥", label: "Rest", color: "border-mint/75 text-mint" },
-  upgrade: { icon: "↑", label: "Upgrade", color: "border-sky-400/75 text-sky-300" },
+const NODE_META: Record<MapNodeType, { icon: string; label: string; tone: string }> = {
+  normal: { icon: "±", label: "Encounter", tone: "text-zinc-100" },
+  elite: { icon: "◆", label: "Elite", tone: "text-yellow-300" },
+  boss: { icon: "★", label: "Boss", tone: "text-yellow-300" },
+  shop: { icon: "●", label: "Shop", tone: "text-yellow-400" },
+  event: { icon: "?", label: "Event", tone: "text-zinc-300" },
+  rest: { icon: "♥", label: "Rest", tone: "text-white" },
+  upgrade: { icon: "↑", label: "Upgrade", tone: "text-zinc-100" },
 };
 
 export function MapScreen({ run }: { run: RunState }) {
@@ -112,8 +109,8 @@ export function MapScreen({ run }: { run: RunState }) {
     0,
     ...run.map.nodes.filter((node) => node.status === "available").map((node) => node.row),
   );
-  const rowSpacing = 94;
-  const verticalPadding = 58;
+  const rowSpacing = 88;
+  const verticalPadding = 56;
   const mapHeight = maxRow * rowSpacing + verticalPadding * 2;
   const yForRow = (row: number) => (maxRow - row) * rowSpacing + verticalPadding;
   const xForColumn = (column: number) => (column + 0.5) * 200;
@@ -135,16 +132,21 @@ export function MapScreen({ run }: { run: RunState }) {
           Choose your route
         </h1>
         <p className="mt-1 text-xs text-parchment/55 sm:text-sm">
-          Climb upward. Only connected rooms can be entered.
+          Follow the live circuit upward before the count reaches zero.
         </p>
       </header>
 
       <div
         ref={scrollRef}
-        className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-2xl border border-parchment/15 bg-panel/45 [background-image:radial-gradient(circle,rgba(245,238,223,0.06)_1px,transparent_1px)] [background-size:22px_22px] [scrollbar-color:#f3b83b66_transparent]"
+        className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-2xl border border-zinc-700/80 bg-zinc-950/80 [background-image:linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] [background-size:32px_32px] [scrollbar-color:#eab30866_transparent]"
         aria-label="Branching run map"
       >
         <div className="relative mx-auto w-full max-w-2xl" style={{ height: mapHeight }}>
+          <div
+            className="pointer-events-none absolute left-0 right-0 z-0 h-px bg-yellow-500/20 shadow-[0_0_18px_rgba(234,179,8,0.22)]"
+            style={{ top: yForRow(focusRow) }}
+            aria-hidden="true"
+          />
           <svg
             className="pointer-events-none absolute inset-0 h-full w-full"
             viewBox={`0 0 600 ${mapHeight}`}
@@ -157,17 +159,26 @@ export function MapScreen({ run }: { run: RunState }) {
                 if (!target) return null;
                 const travelled = node.status === "completed";
                 const reachable = travelled && target.status === "available";
+                const sourceX = xForColumn(node.column);
+                const sourceY = yForRow(node.row);
+                const targetX = xForColumn(target.column);
+                const targetY = yForRow(target.row);
+                const midpointY = (sourceY + targetY) / 2;
                 return (
-                  <line
+                  <motion.path
                     key={`${node.id}-${connectionId}`}
-                    x1={xForColumn(node.column)}
-                    y1={yForRow(node.row)}
-                    x2={xForColumn(target.column)}
-                    y2={yForRow(target.row)}
-                    stroke={reachable ? "#f3b83b" : travelled ? "#70d6a5" : "#f5eedf"}
-                    strokeOpacity={reachable ? 0.9 : travelled ? 0.58 : 0.22}
-                    strokeWidth={reachable ? 4 : 2}
-                    strokeDasharray={travelled ? undefined : "6 8"}
+                    d={`M ${sourceX} ${sourceY} C ${sourceX} ${midpointY}, ${targetX} ${midpointY}, ${targetX} ${targetY}`}
+                    fill="none"
+                    stroke={reachable ? "#eab308" : travelled ? "#facc15" : "#71717a"}
+                    strokeOpacity={reachable ? 1 : travelled ? 0.62 : 0.38}
+                    strokeWidth={reachable ? 4 : travelled ? 3 : 2}
+                    strokeDasharray={reachable ? "8 8" : travelled ? undefined : "3 9"}
+                    animate={reachable ? { strokeDashoffset: [0, -32] } : undefined}
+                    transition={
+                      reachable
+                        ? { duration: 1.2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }
+                        : undefined
+                    }
                     vectorEffect="non-scaling-stroke"
                   />
                 );
@@ -182,18 +193,23 @@ export function MapScreen({ run }: { run: RunState }) {
             return (
               <motion.button
                 initial={{ scale: 0.85, opacity: 0 }}
-                animate={{ scale: 1, opacity: completed ? 0.78 : available ? 1 : 0.56 }}
+                animate={{ scale: 1, opacity: completed ? 0.8 : available ? 1 : 0.62 }}
                 key={node.id}
                 disabled={!available}
                 onClick={() => dispatch({ type: "MAP_NODE_SELECTED", nodeId: node.id })}
                 aria-label={`${meta.label}, ${node.status}`}
                 data-map-node-status={node.status}
                 style={{ left: `${((node.column + 0.5) / 3) * 100}%`, top: yForRow(node.row) }}
-                className={`absolute grid size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 bg-panel text-xl font-black shadow-xl transition sm:size-16 sm:text-2xl ${meta.color} ${available ? "cursor-pointer ring-4 ring-gold/35 shadow-[0_0_26px_rgba(243,184,59,0.16)] hover:scale-110 hover:bg-ink" : "cursor-default"} ${completed ? "!border-mint/60 !text-mint" : ""}`}
+                className={`absolute flex h-12 w-20 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-xl border bg-zinc-900/95 px-2 text-left shadow-lg transition sm:h-14 sm:w-24 sm:gap-2 sm:px-3 ${meta.tone} ${available ? "cursor-pointer !border-yellow-500 !bg-yellow-500 !text-zinc-950 ring-4 ring-yellow-500/20 shadow-[0_0_28px_rgba(234,179,8,0.2)] hover:scale-105 hover:bg-yellow-400" : "cursor-default border-zinc-600/80"} ${completed ? "!border-yellow-500/50 !bg-yellow-500/10 !text-yellow-300" : ""}`}
               >
-                <span aria-hidden="true">{completed ? "✓" : meta.icon}</span>
-                <span className="pointer-events-none absolute top-[calc(100%+0.25rem)] whitespace-nowrap rounded bg-ink/90 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-parchment/75 sm:text-[9px]">
+                <span className="text-lg font-black sm:text-xl" aria-hidden="true">
+                  {completed ? "✓" : meta.icon}
+                </span>
+                <span className="min-w-0 text-[8px] font-black uppercase leading-tight tracking-wide sm:text-[9px]">
                   {meta.label}
+                </span>
+                <span className="absolute right-1.5 top-1 font-mono text-[7px] opacity-45 sm:text-[8px]">
+                  T−{maxRow - node.row}
                 </span>
               </motion.button>
             );
@@ -201,7 +217,7 @@ export function MapScreen({ run }: { run: RunState }) {
         </div>
       </div>
 
-      <div className="mx-auto mt-2 flex max-w-2xl shrink-0 flex-wrap justify-center gap-x-3 gap-y-1 text-[9px] text-parchment/45 sm:text-xs">
+      <div className="mx-auto mt-2 flex max-w-2xl shrink-0 flex-wrap justify-center gap-x-3 gap-y-1 text-[9px] text-zinc-400 sm:text-xs">
         {Object.values(NODE_META).map((meta) => (
           <span key={meta.label}>
             {meta.icon} {meta.label}
@@ -298,7 +314,7 @@ export function EventScreen({ run }: { run: RunState }) {
           <button
             key={option.id}
             onClick={() => dispatch({ type: "EVENT_OPTION_SELECTED", optionId: option.id })}
-            className="min-h-32 rounded-2xl border border-violet-400/25 bg-panel p-4 text-left transition hover:-translate-y-1 hover:border-violet-300 sm:min-h-40 sm:p-5"
+            className="min-h-32 rounded-2xl border border-yellow-500/25 bg-panel p-4 text-left transition hover:-translate-y-1 hover:border-yellow-400 sm:min-h-40 sm:p-5"
           >
             <strong className="font-display text-xl">{option.label}</strong>
             <span className="mt-3 block text-sm leading-relaxed text-parchment/65">
@@ -335,30 +351,29 @@ export function RestScreen({ run }: { run: RunState }) {
   );
 }
 
-export function UpgradeScreen({ run }: { run: RunState }) {
+export function UpgradeScreen() {
   const dispatch = useGameStore((state) => state.dispatch);
-  const smallest = Math.min(...run.numberBag.map((card) => card.value));
   return (
     <ScreenFrame eyebrow="Improve the formula" title="Choose an upgrade" narrow>
       <div className="grid gap-4 sm:grid-cols-2">
         <button
           onClick={() => dispatch({ type: "UPGRADE_SELECTED", upgrade: "max-hp" })}
-          className="min-h-36 rounded-2xl border border-sky-400/25 bg-panel p-4 text-left transition hover:-translate-y-1 hover:border-sky-300 sm:min-h-48 sm:p-6"
+          className="min-h-36 rounded-2xl border border-yellow-500/25 bg-panel p-4 text-left transition hover:-translate-y-1 hover:border-yellow-400 sm:min-h-48 sm:p-6"
         >
-          <span className="text-3xl text-sky-300">♥+</span>
+          <span className="text-3xl text-yellow-400">♥+</span>
           <strong className="mt-4 block font-display text-2xl">Stronger Nerves</strong>
           <span className="mt-2 block text-sm text-parchment/65">
             Gain {BALANCE.upgradeMaxHp} maximum health and heal the same amount.
           </span>
         </button>
         <button
-          onClick={() => dispatch({ type: "UPGRADE_SELECTED", upgrade: "refine" })}
+          onClick={() => dispatch({ type: "UPGRADE_SELECTED", upgrade: "focus" })}
           className="min-h-36 rounded-2xl border border-gold/25 bg-panel p-4 text-left transition hover:-translate-y-1 hover:border-gold sm:min-h-48 sm:p-6"
         >
-          <span className="text-3xl text-gold">⌫</span>
-          <strong className="mt-4 block font-display text-2xl">Refine the Bag</strong>
+          <span className="text-3xl text-gold">◷+</span>
+          <strong className="mt-4 block font-display text-2xl">Clearer Thinking</strong>
           <span className="mt-2 block text-sm text-parchment/65">
-            Remove one {smallest}, your lowest-value tile.
+            Gain {BALANCE.upgradeFocusSeconds} permanent seconds for every future puzzle.
           </span>
         </button>
       </div>
@@ -391,7 +406,7 @@ export function EndScreen({ run, victory }: { run: RunState; victory: boolean })
         </p>
         <div className="mt-6 flex justify-center gap-4 text-sm text-parchment/50">
           <span>{run.relicIds.length} relics</span>
-          <span>{run.numberBag.length} tiles</span>
+          <span>+{run.focusBonusSeconds}s focus</span>
           <span>{run.currency} coins</span>
         </div>
         <GameButton className="mt-8" onClick={() => dispatch({ type: "RETURNED_TO_TITLE" })}>

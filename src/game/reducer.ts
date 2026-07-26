@@ -13,17 +13,17 @@ import type {
 } from "./content/types";
 import { completeCurrentNode, generateMap, selectMapNode } from "./map/map";
 import { createPuzzle } from "./puzzle/createPuzzle";
+import { puzzleDifficultyFor } from "./puzzle/difficulty";
 import { generateTarget } from "./puzzle/generateTarget";
 import { reducePuzzle } from "./puzzle/puzzleReducer";
 import type { PuzzleResolution } from "./puzzle/types";
 import { createRng, randomInt, shuffle } from "./rng";
-import { createEncounterBag, createStartingBag, discardHand, drawHand } from "./run/bag";
+import { createEncounterSequence, createNumberSet, drawHand, recycleHand } from "./run/numbers";
 import type {
   EncounterState,
   GameAction,
   GameScreen,
   GameState,
-  NumberCardDefinition,
   RewardKind,
   RewardOption,
   RunState,
@@ -50,62 +50,62 @@ function startArmor(run: RunState): number {
     .reduce((total, effect) => total + effect.amount, 0);
 }
 
-function encounterRounds(type: EncounterType): 3 | 4 | 5 {
-  if (type === "elite") return BALANCE.eliteRounds;
-  if (type === "boss") return BALANCE.bossRounds;
-  return BALANCE.normalRounds;
+export function encounterPuzzleBudget(enemyMaxHp: number): number {
+  return Math.ceil(enemyMaxHp / BALANCE.expectedReliableDamage) + BALANCE.recoveryPuzzleBuffer;
 }
 
-function pickEnemyIntent(
-  definition: EnemyDefinition,
-  rng: RunState["rng"],
-  previousIntentId?: string,
-) {
-  const candidates = previousIntentId
-    ? definition.intents.filter((intent) => intent.id !== previousIntentId)
-    : definition.intents;
-  const intentPick = randomInt(rng, 0, candidates.length - 1);
-  const intent = candidates[intentPick.value];
+function encounterFloor(run: RunState): number {
+  const current = run.map.nodes.find((node) => node.id === run.currentNodeId);
+  return (current?.row ?? 0) + 1;
+}
+
+function pickEnemyIntent(definition: EnemyDefinition, rng: RunState["rng"], round: number) {
+  const intent = definition.intents[(round - 1) % definition.intents.length];
   if (!intent) throw new Error(`Enemy ${definition.id} has no intents`);
-  return { intent, rng: intentPick.rng };
+  return { intent, rng };
 }
 
 function createEncounter(run: RunState, type: EncounterType): RunState {
   const candidates = ENEMIES.filter((enemy) => enemy.type === type);
-  const enemyPick = randomInt(run.rng, 0, candidates.length - 1);
-  const definition = candidates[enemyPick.value];
+  const floor = encounterFloor(run);
+  const definition = candidates[(floor - 1) % candidates.length];
   if (!definition) throw new Error(`No enemy content exists for ${type}`);
 
-  const encounterBag = createEncounterBag(run.numberBag, enemyPick.rng);
-  const drawn = drawHand(encounterBag.bag, encounterBag.rng);
+  const encounterSequence = createEncounterSequence(run.numberSet, run.rng);
+  const drawn = drawHand(encounterSequence.numberSequence, encounterSequence.rng);
   const handValues = drawn.hand.map((cardId) => {
-    const card = run.numberBag.find((candidate) => candidate.definitionId === cardId);
+    const card = run.numberSet.find((candidate) => candidate.definitionId === cardId);
     if (!card) throw new Error(`Missing number card ${cardId}`);
     return card.value;
   });
-  const target = generateTarget(handValues, drawn.rng);
-  const intentPick = pickEnemyIntent(definition, target.rng);
+  const target = generateTarget(handValues, drawn.rng, puzzleDifficultyFor(floor, type, 1));
+  const intentPick = pickEnemyIntent(definition, target.rng, 1);
 
   const encounterId = `${run.currentNodeId ?? "debug"}:${definition.id}`;
-  const cardsById = new Map(run.numberBag.map((card) => [card.definitionId, card]));
-  const puzzle = createPuzzle(
-    `${encounterId}:puzzle:1`,
-    target.target,
-    drawn.hand.map((cardId, index) => {
-      const card = cardsById.get(cardId);
-      if (!card) throw new Error(`Missing number card ${cardId}`);
-      return {
-        tileId: `${encounterId}:puzzle:1:source:${index}`,
-        sourceDefinitionId: card.definitionId,
-        value: card.value,
-      };
-    }),
-  );
+  const cardsById = new Map(run.numberSet.map((card) => [card.definitionId, card]));
+  const puzzle = {
+    ...createPuzzle(
+      `${encounterId}:puzzle:1`,
+      target.target,
+      drawn.hand.map((cardId, index) => {
+        const card = cardsById.get(cardId);
+        if (!card) throw new Error(`Missing number card ${cardId}`);
+        return {
+          tileId: `${encounterId}:puzzle:1:source:${index}`,
+          sourceDefinitionId: card.definitionId,
+          value: card.value,
+        };
+      }),
+      target.minimumOperations,
+    ),
+    timeBonusSeconds: run.focusBonusSeconds,
+  };
   const encounter: EncounterState = {
     encounterId,
     type,
     roundIndex: 1,
-    maxRounds: encounterRounds(type),
+    maxRounds: encounterPuzzleBudget(definition.maxHp),
+    roundHistory: [],
     enemy: {
       enemyId: definition.id,
       name: definition.name,
@@ -115,7 +115,7 @@ function createEncounter(run: RunState, type: EncounterType): RunState {
       armor: 0,
       currentIntent: intentPick.intent,
     },
-    bag: drawn.bag,
+    numberSequence: drawn.numberSequence,
     handCardIds: drawn.hand,
     puzzle,
     status: "puzzle",
@@ -127,31 +127,40 @@ function nextPuzzle(run: RunState): RunState {
   const encounter = run.encounter;
   if (!encounter) return run;
   const roundIndex = encounter.roundIndex + 1;
-  const drawn = drawHand(encounter.bag, run.rng);
+  const drawn = drawHand(encounter.numberSequence, run.rng);
   const handValues = drawn.hand.map((cardId) => {
-    const card = run.numberBag.find((candidate) => candidate.definitionId === cardId);
+    const card = run.numberSet.find((candidate) => candidate.definitionId === cardId);
     if (!card) throw new Error(`Missing number card ${cardId}`);
     return card.value;
   });
-  const target = generateTarget(handValues, drawn.rng);
+  const floor = encounterFloor(run);
+  const target = generateTarget(
+    handValues,
+    drawn.rng,
+    puzzleDifficultyFor(floor, encounter.type, roundIndex),
+  );
   const definition = ENEMIES.find((enemy) => enemy.id === encounter.enemy.enemyId);
   if (!definition) throw new Error(`Missing enemy ${encounter.enemy.enemyId}`);
-  const intentPick = pickEnemyIntent(definition, target.rng, encounter.enemy.currentIntent.id);
-  const cardsById = new Map(run.numberBag.map((card) => [card.definitionId, card]));
+  const intentPick = pickEnemyIntent(definition, target.rng, roundIndex);
+  const cardsById = new Map(run.numberSet.map((card) => [card.definitionId, card]));
   const puzzleId = `${encounter.encounterId}:puzzle:${roundIndex}`;
-  const puzzle = createPuzzle(
-    puzzleId,
-    target.target,
-    drawn.hand.map((cardId, index) => {
-      const card = cardsById.get(cardId);
-      if (!card) throw new Error(`Missing number card ${cardId}`);
-      return {
-        tileId: `${puzzleId}:source:${index}`,
-        sourceDefinitionId: cardId,
-        value: card.value,
-      };
-    }),
-  );
+  const puzzle = {
+    ...createPuzzle(
+      puzzleId,
+      target.target,
+      drawn.hand.map((cardId, index) => {
+        const card = cardsById.get(cardId);
+        if (!card) throw new Error(`Missing number card ${cardId}`);
+        return {
+          tileId: `${puzzleId}:source:${index}`,
+          sourceDefinitionId: cardId,
+          value: card.value,
+        };
+      }),
+      target.minimumOperations,
+    ),
+    timeBonusSeconds: run.focusBonusSeconds,
+  };
   return {
     ...run,
     rng: intentPick.rng,
@@ -160,7 +169,7 @@ function nextPuzzle(run: RunState): RunState {
       roundIndex,
       puzzle,
       handCardIds: drawn.hand,
-      bag: drawn.bag,
+      numberSequence: drawn.numberSequence,
       status: "puzzle",
       lastRound: undefined,
       enemy: { ...encounter.enemy, currentIntent: intentPick.intent },
@@ -266,8 +275,22 @@ function resolveRound(
     armor: encounter.enemy.armor - absorbed,
     hp: Math.max(0, encounter.enemy.hp - hpDamage),
   };
+  const actualHpDamage = encounter.enemy.hp - enemy.hp;
   const finalResolution = { ...resolution, finalDamage };
-  const discardedBag = discardHand(encounter.bag, encounter.handCardIds);
+  const attempt = {
+    puzzleNumber: encounter.roundIndex,
+    outcome:
+      resolution.distance === 0
+        ? ("solved" as const)
+        : finalDamage > 0
+          ? ("partial" as const)
+          : ("failed" as const),
+    submittedValue: resolution.submittedValue,
+    distance: resolution.distance,
+    damageDealt: finalDamage,
+  };
+  const roundHistory = [...encounter.roundHistory, attempt];
+  const recycledSequence = recycleHand(encounter.numberSequence, encounter.handCardIds);
   let nextRun: RunState = {
     ...run,
     weakenedBy: 0,
@@ -280,12 +303,17 @@ function resolveRound(
     const wonEncounter: EncounterState = {
       ...encounter,
       enemy,
-      bag: discardedBag,
+      roundHistory,
+      numberSequence: recycledSequence,
       puzzle: { ...encounter.puzzle, resolution: finalResolution },
       status: "won",
       lastRound: {
         resolution: finalResolution,
         damageDealt: finalDamage,
+        armorBlocked: absorbed,
+        hpDamage: actualHpDamage,
+        enemyHpBefore: encounter.enemy.hp,
+        enemyHpAfter: enemy.hp,
         enemyAction: `${enemy.name} is defeated before it can act.`,
         playerDamageTaken: 0,
       },
@@ -299,12 +327,17 @@ function resolveRound(
   const resolvedEncounter: EncounterState = {
     ...encounter,
     enemy,
-    bag: discardedBag,
+    roundHistory,
+    numberSequence: recycledSequence,
     puzzle: { ...encounter.puzzle, resolution: finalResolution },
     status: "resolved",
     lastRound: {
       resolution: finalResolution,
       damageDealt: finalDamage,
+      armorBlocked: absorbed,
+      hpDamage: actualHpDamage,
+      enemyHpBefore: encounter.enemy.hp,
+      enemyHpAfter: enemy.hp,
       enemyAction: acted.action,
       playerDamageTaken: acted.damageTaken,
     },
@@ -333,15 +366,7 @@ function resolveRound(
   return { run: nextRun, screen: "encounter", effects };
 }
 
-const REWARD_KINDS: RewardKind[] = [
-  "add-number",
-  "remove-number",
-  "transform-number",
-  "relic",
-  "consumable",
-  "currency",
-  "heal",
-];
+const REWARD_KINDS: RewardKind[] = ["relic", "consumable", "currency", "heal"];
 
 function buildReward(
   run: RunState,
@@ -364,50 +389,6 @@ function buildReward(
         title: "Catch Your Breath",
         description: "Recover 10 health.",
         value: 10,
-      },
-    };
-  }
-  if (kind === "add-number") {
-    const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 25, 50, 75, 100];
-    const pick = randomInt(run.rng, 0, values.length - 1);
-    const value = values[pick.value] ?? 5;
-    return {
-      run: { ...run, rng: pick.rng },
-      option: {
-        id,
-        kind,
-        title: `Add a ${value}`,
-        description: `Add one ${value} tile to your number bag.`,
-        value,
-      },
-    };
-  }
-  if (kind === "remove-number" || kind === "transform-number") {
-    const pick = randomInt(run.rng, 0, run.numberBag.length - 1);
-    const card = run.numberBag[pick.value];
-    if (!card) return buildReward({ ...run, rng: pick.rng }, "currency", index);
-    if (kind === "remove-number") {
-      return {
-        run: { ...run, rng: pick.rng },
-        option: {
-          id,
-          kind,
-          title: `Remove a ${card.value}`,
-          description: "Thin your bag for more consistent draws.",
-          cardId: card.definitionId,
-        },
-      };
-    }
-    const newValue = card.value >= 100 ? 75 : card.value + 1;
-    return {
-      run: { ...run, rng: pick.rng },
-      option: {
-        id,
-        kind,
-        title: `${card.value} → ${newValue}`,
-        description: "Transform one tile permanently for this run.",
-        cardId: card.definitionId,
-        newValue,
       },
     };
   }
@@ -454,28 +435,6 @@ function applyReward(run: RunState, reward: RewardOption): RunState {
   if (reward.kind === "currency") return { ...run, currency: run.currency + (reward.value ?? 0) };
   if (reward.kind === "heal")
     return { ...run, hp: Math.min(run.maxHp, run.hp + (reward.value ?? 0)) };
-  if (reward.kind === "add-number" && reward.value) {
-    const card: NumberCardDefinition = {
-      definitionId: `${reward.id}:card`,
-      value: reward.value,
-      tags: [reward.value >= 25 ? "large" : "small", "reward"],
-    };
-    return { ...run, numberBag: [...run.numberBag, card] };
-  }
-  if (reward.kind === "remove-number" && reward.cardId && run.numberBag.length > 6) {
-    return {
-      ...run,
-      numberBag: run.numberBag.filter((card) => card.definitionId !== reward.cardId),
-    };
-  }
-  if (reward.kind === "transform-number" && reward.cardId && reward.newValue) {
-    return {
-      ...run,
-      numberBag: run.numberBag.map((card) =>
-        card.definitionId === reward.cardId ? { ...card, value: reward.newValue! } : card,
-      ),
-    };
-  }
   if (reward.kind === "relic" && reward.relicId && !run.relicIds.includes(reward.relicId)) {
     return { ...run, relicIds: [...run.relicIds, reward.relicId] };
   }
@@ -489,15 +448,13 @@ function applyReward(run: RunState, reward: RewardOption): RunState {
 }
 
 function generateShop(run: RunState): RunState {
-  const kinds: RewardKind[] = ["relic", "consumable", "heal", "remove-number", "add-number"];
+  const kinds: RewardKind[] = ["relic", "consumable", "heal", "relic", "consumable"];
   let nextRun = run;
   const items: ShopItem[] = [];
   const costs: Record<string, number> = {
     relic: 38,
     consumable: 18,
     heal: 14,
-    "remove-number": 28,
-    "add-number": 22,
   };
   for (let index = 0; index < BALANCE.shopInventorySize; index += 1) {
     const kind = kinds[index] ?? "heal";
@@ -532,7 +489,7 @@ function addConsumable(run: RunState, consumableId: string): RunState {
   return { ...run, consumableSlots: slots };
 }
 
-function applyEventEffect(run: RunState, effect: EventEffect, key: string): RunState {
+function applyEventEffect(run: RunState, effect: EventEffect): RunState {
   if (effect.type === "heal") return { ...run, hp: Math.min(run.maxHp, run.hp + effect.amount) };
   if (effect.type === "damage") return { ...run, hp: Math.max(1, run.hp - effect.amount) };
   if (effect.type === "currency")
@@ -540,24 +497,6 @@ function applyEventEffect(run: RunState, effect: EventEffect, key: string): RunS
   if (effect.type === "consumable") return addConsumable(run, effect.consumableId);
   if (effect.type === "relic" && !run.relicIds.includes(effect.relicId))
     return { ...run, relicIds: [...run.relicIds, effect.relicId] };
-  if (effect.type === "remove-smallest" && run.numberBag.length > 6) {
-    const smallest = [...run.numberBag].sort((a, b) => a.value - b.value)[0];
-    return smallest
-      ? {
-          ...run,
-          numberBag: run.numberBag.filter((card) => card.definitionId !== smallest.definitionId),
-        }
-      : run;
-  }
-  if (effect.type === "add-number") {
-    return {
-      ...run,
-      numberBag: [
-        ...run.numberBag,
-        { definitionId: `${key}:card`, value: effect.value, tags: ["event"] },
-      ],
-    };
-  }
   return run;
 }
 
@@ -627,6 +566,10 @@ function applyConsumable(
           ? {
               resolution: { baseDamage: 0, finalDamage: 0, reason: "manual" },
               damageDealt: effect.amount,
+              armorBlocked: absorbed,
+              hpDamage: encounter.enemy.hp - enemy.hp,
+              enemyHpBefore: encounter.enemy.hp,
+              enemyHpAfter: enemy.hp,
               enemyAction: `${enemy.name} is defeated by the ${consumable.name}.`,
               playerDamageTaken: 0,
             }
@@ -649,7 +592,8 @@ export function reduceGame(state: GameState, action: GameAction): EngineTransiti
       maxHp: BALANCE.playerMaxHp,
       armor: 0,
       currency: 12,
-      numberBag: createStartingBag(),
+      numberSet: createNumberSet(),
+      focusBonusSeconds: 0,
       relicIds: [],
       consumableSlots: ["time-tonic", null, null],
       doubleNextDamage: false,
@@ -871,8 +815,7 @@ export function reduceGame(state: GameState, action: GameAction): EngineTransiti
     if (run.currency + currencyDelta < 0)
       return message(state, "You do not have enough coins for that choice.");
     const changed = option.effects.reduce(
-      (current, effect, index) =>
-        applyEventEffect(current, effect, `${run.currentNodeId}:${option.id}:${index}`),
+      (current, effect) => applyEventEffect(current, effect),
       run,
     );
     return result({ screen: "map", run: finishNode(changed) }, [
@@ -888,21 +831,17 @@ export function reduceGame(state: GameState, action: GameAction): EngineTransiti
   }
 
   if (action.type === "UPGRADE_SELECTED") {
-    let upgraded = run;
-    if (action.upgrade === "max-hp") {
-      upgraded = {
-        ...run,
-        maxHp: run.maxHp + BALANCE.upgradeMaxHp,
-        hp: run.hp + BALANCE.upgradeMaxHp,
-      };
-    } else if (run.numberBag.length > 6) {
-      const smallest = [...run.numberBag].sort((a, b) => a.value - b.value)[0];
-      if (smallest)
-        upgraded = {
-          ...run,
-          numberBag: run.numberBag.filter((card) => card.definitionId !== smallest.definitionId),
-        };
-    }
+    const upgraded =
+      action.upgrade === "max-hp"
+        ? {
+            ...run,
+            maxHp: run.maxHp + BALANCE.upgradeMaxHp,
+            hp: run.hp + BALANCE.upgradeMaxHp,
+          }
+        : {
+            ...run,
+            focusBonusSeconds: run.focusBonusSeconds + BALANCE.upgradeFocusSeconds,
+          };
     return result({ screen: "map", run: finishNode(upgraded) }, [
       { type: "MESSAGE", message: "Your run has been upgraded." },
     ]);

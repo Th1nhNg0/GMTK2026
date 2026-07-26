@@ -9,9 +9,9 @@ export const EVENTS: EventDefinition[] = [
       {
         id: "reach",
         label: "Reach in",
-        description: "Gain a 25. Lose 5 health.",
+        description: "Pull out 18 coins. Lose 5 health.",
         effects: [
-          { type: "add-number", value: 25 },
+          { type: "currency", amount: 18 },
           { type: "damage", amount: 5 },
         ],
       },
@@ -77,9 +77,12 @@ export const EVENTS: EventDefinition[] = [
     options: [
       {
         id: "lighten",
-        label: "Offer your smallest tile",
-        description: "Remove the lowest number and gain 12 coins.",
-        effects: [{ type: "remove-smallest" }, { type: "currency", amount: 12 }],
+        label: "Leave a coin purse",
+        description: "Spend 6 coins and recover 12 health.",
+        effects: [
+          { type: "currency", amount: -6 },
+          { type: "heal", amount: 12 },
+        ],
       },
       {
         id: "decline",

@@ -6,6 +6,12 @@ Created by [th1nhng0](https://thinhcorner.com).
 
 Six numbers enter. One answer leaves. Build legal whole-number equations, turn their results into new operands, and fight your way up a branching run before the clock reaches zero.
 
+Puzzle difficulty is directed rather than randomly selected. Early floors use readable two-step targets, the middle introduces three-step solutions, late elites require four steps, and the boss advances to five-step targets. Every displayed target is selected from values that are exactly reachable with the current six numbers. Hands use a stable Countdown-style composition of one large and five small numbers.
+
+Encounter length is derived from enemy HP using a reliable seven-damage answer plus one recovery puzzle: normals receive four puzzles, elites five, and the boss six. The combat header records exact, close, and missed attempts, while each submitted answer passes through an Answer → Accuracy → Power score sequence before impact.
+
+Each new fight opens with a brief, skippable opponent reveal showing the monster's health, encounter length, opening intent, and any special passive. The puzzle clock starts only after this introduction finishes.
+
 ## Play locally
 
 Requires Node.js 22 or newer.
@@ -50,3 +56,7 @@ Upload `release/last-sum-standing-html5.zip` as an HTML game and select **This f
 The Vite build uses relative asset paths and has no server or network dependency. Runs, volume, mute, and reduced-motion preferences are intentionally memory-only; refreshing or closing the page destroys them.
 
 The cover and banner are generated locally from simple geometric drawing code. No generated-image assets are used.
+
+## Art credit
+
+Monster illustrations are from the [FREE RPG Monster Pack by Pipoya](https://pipoya.itch.io/free-rpg-monster-pack), used and adapted under the pack's commercial/personal-use license. The pack permits game use and editing but not redistribution or resale as a standalone asset pack.

@@ -20,7 +20,7 @@ export function ScreenRouter({ game }: { game: GameState }) {
   if (game.screen === "shop") return <ShopScreen run={run} />;
   if (game.screen === "event") return <EventScreen run={run} />;
   if (game.screen === "rest") return <RestScreen run={run} />;
-  if (game.screen === "upgrade") return <UpgradeScreen run={run} />;
+  if (game.screen === "upgrade") return <UpgradeScreen />;
   if (game.screen === "victory") return <EndScreen run={run} victory />;
   return <EndScreen run={run} victory={false} />;
 }

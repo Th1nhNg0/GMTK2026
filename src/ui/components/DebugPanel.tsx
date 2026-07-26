@@ -28,10 +28,10 @@ export function DebugPanel() {
 
   return (
     <aside
-      className={`fixed right-2 top-[4.25rem] z-[60] max-h-[80dvh] overflow-y-auto rounded-xl border border-fuchsia-400/40 bg-[#170e20]/95 text-xs shadow-2xl transition-[width] ${open ? "w-72" : "w-12"}`}
+      className={`fixed right-2 top-[4.25rem] z-[60] max-h-[80dvh] overflow-y-auto rounded-xl border border-yellow-500/40 bg-[#18181b]/95 text-xs shadow-2xl transition-[width] ${open ? "w-72" : "w-12"}`}
     >
       <button
-        className={`flex min-h-11 w-full items-center px-3 font-black text-fuchsia-300 ${open ? "justify-between" : "justify-center"}`}
+        className={`flex min-h-11 w-full items-center px-3 font-black text-yellow-400 ${open ? "justify-between" : "justify-center"}`}
         onClick={() => setOpen(!open)}
         aria-label="Toggle developer tools"
       >
@@ -44,7 +44,7 @@ export function DebugPanel() {
         )}
       </button>
       {open && (
-        <div className="space-y-3 border-t border-fuchsia-400/20 p-3">
+        <div className="space-y-3 border-t border-yellow-500/20 p-3">
           <div>
             <p className="mb-1 font-bold text-parchment/50">Start encounter</p>
             <div className="grid grid-cols-3 gap-1">
@@ -52,7 +52,7 @@ export function DebugPanel() {
                 <button
                   key={encounterType}
                   onClick={() => dispatch({ type: "DEBUG_ENCOUNTER_STARTED", encounterType })}
-                  className="min-h-9 rounded bg-fuchsia-400/15 px-1"
+                  className="min-h-9 rounded bg-yellow-500/15 px-1"
                 >
                   {encounterType}
                 </button>
@@ -115,7 +115,7 @@ export function DebugPanel() {
                 <button
                   key={scale}
                   onClick={() => setTimerScale(scale)}
-                  className={`min-h-9 rounded ${timerScale === scale ? "bg-fuchsia-400 text-ink" : "bg-fuchsia-400/15"}`}
+                  className={`min-h-9 rounded ${timerScale === scale ? "bg-yellow-500 text-ink" : "bg-yellow-500/15"}`}
                 >
                   {scale}×
                 </button>
@@ -135,7 +135,7 @@ export function DebugPanel() {
               ))}
             </select>
             <button
-              className="min-h-9 rounded bg-fuchsia-400/15 px-2"
+              className="min-h-9 rounded bg-yellow-500/15 px-2"
               onClick={() => dispatch({ type: "DEBUG_NODE_JUMPED", nodeId })}
             >
               Jump

@@ -59,8 +59,6 @@ export type EventEffect =
   | { type: "heal"; amount: number }
   | { type: "damage"; amount: number }
   | { type: "currency"; amount: number }
-  | { type: "add-number"; value: number }
-  | { type: "remove-smallest" }
   | { type: "relic"; relicId: string }
   | { type: "consumable"; consumableId: string };
 

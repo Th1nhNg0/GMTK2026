@@ -32,11 +32,18 @@ export function App() {
   const previousScreen = useRef(game.screen);
 
   useEffect(() => {
+    const timers: number[] = [];
     for (const effect of effects) {
       const sound = soundForEffect(effect);
-      if (sound) audioManager.play(sound);
+      if (!sound) continue;
+      if (effect.type === "ENEMY_DAMAGED" && !reducedMotion) {
+        timers.push(window.setTimeout(() => audioManager.play(sound), 3_450));
+      } else {
+        audioManager.play(sound);
+      }
     }
-  }, [effectSequence, effects]);
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [effectSequence, effects, reducedMotion]);
 
   useEffect(() => {
     if (previousScreen.current !== game.screen) {

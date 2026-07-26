@@ -1,4 +1,4 @@
-import { reduceGame } from "./reducer";
+import { encounterPuzzleBudget, reduceGame } from "./reducer";
 import type { GameAction, GameState } from "./run/types";
 
 function dispatch(state: GameState, ...actions: GameAction[]): GameState {
@@ -30,10 +30,24 @@ describe("game reducer", () => {
     expect(state.run?.encounter?.enemy.currentIntent.description).toBeTruthy();
   });
 
+  it("uses a fixed enemy and opening intent for a given floor", () => {
+    const encounterFor = (seed: number) => {
+      const started = reduceGame({ screen: "title" }, { type: "RUN_STARTED", seed }).state;
+      return reduceGame(started, { type: "MAP_NODE_SELECTED", nodeId: "node-0-0" }).state.run!
+        .encounter!;
+    };
+    const first = encounterFor(1);
+    const second = encounterFor(999_999);
+    expect(first.enemy.enemyId).toBe("sumslinger");
+    expect(second.enemy.enemyId).toBe(first.enemy.enemyId);
+    expect(first.enemy.currentIntent.id).toBe("jab");
+    expect(second.enemy.currentIntent.id).toBe(first.enemy.currentIntent.id);
+  });
+
   it.each([
-    ["normal", 3],
-    ["elite", 4],
-    ["boss", 5],
+    ["normal", 4],
+    ["elite", 5],
+    ["boss", 6],
   ] as const)("uses the required %s encounter length", (encounterType, rounds) => {
     const started = reduceGame({ screen: "title" }, { type: "RUN_STARTED", seed: 44 }).state;
     const encounter = reduceGame(started, {
@@ -41,6 +55,36 @@ describe("game reducer", () => {
       encounterType,
     }).state;
     expect(encounter.run?.encounter?.maxRounds).toBe(rounds);
+  });
+
+  it("derives a fair puzzle budget from reliable seven-damage hits plus one recovery puzzle", () => {
+    expect(encounterPuzzleBudget(18)).toBe(4);
+    expect(encounterPuzzleBudget(28)).toBe(5);
+    expect(encounterPuzzleBudget(32)).toBe(6);
+  });
+
+  it("turns the focus upgrade into permanent puzzle time", () => {
+    const started = reduceGame({ screen: "title" }, { type: "RUN_STARTED", seed: 44 }).state;
+    const upgraded = reduceGame(started, {
+      type: "UPGRADE_SELECTED",
+      upgrade: "focus",
+    }).state;
+    expect(upgraded.run?.focusBonusSeconds).toBe(5);
+    const encounter = reduceGame(upgraded, {
+      type: "DEBUG_ENCOUNTER_STARTED",
+      encounterType: "normal",
+    }).state;
+    expect(encounter.run?.encounter?.puzzle.timeBonusSeconds).toBe(5);
+  });
+
+  it("records failed puzzles in the encounter history", () => {
+    const state = reduceGame(startEncounter(), {
+      type: "PUZZLE_ACTION",
+      action: { type: "RESULT_SUBMITTED", reason: "timeout" },
+    }).state;
+    expect(state.run?.encounter?.roundHistory).toEqual([
+      expect.objectContaining({ puzzleNumber: 1, outcome: "failed", damageDealt: 0 }),
+    ]);
   });
 
   it("does not let an enemy act after lethal exact damage", () => {
@@ -74,6 +118,12 @@ describe("game reducer", () => {
       { type: "PUZZLE_ACTION", action: { type: "OPERATOR_SELECTED", operator: "add" } },
     );
     expect(state.run?.encounter?.status).toBe("won");
+    expect(state.run?.encounter?.roundHistory[0]?.outcome).toBe("solved");
+    expect(state.run?.encounter?.lastRound).toMatchObject({
+      damageDealt: 10,
+      armorBlocked: 0,
+      hpDamage: 1,
+    });
     expect(state.run?.hp).toBe(hpBefore);
   });
 
@@ -118,6 +168,11 @@ describe("game reducer", () => {
       { type: "PUZZLE_ACTION", action: { type: "OPERATOR_SELECTED", operator: "add" } },
     );
     expect(state.run?.encounter?.lastRound?.resolution.finalDamage).toBe(11);
+    expect(state.run?.encounter?.lastRound).toMatchObject({
+      damageDealt: 11,
+      armorBlocked: 3,
+      hpDamage: 8,
+    });
     expect(state.run?.encounter?.enemy.armor).toBe(0);
     expect(state.run?.encounter?.enemy.hp).toBe(enemyHpBefore - 8);
   });
