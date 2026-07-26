@@ -19,5 +19,5 @@ if (Test-Path -LiteralPath $legacyZipPath -PathType Leaf) {
   Remove-Item -LiteralPath $legacyZipPath -Force
 }
 
-Compress-Archive -Path (Join-Path $distPath "*") -DestinationPath $zipPath -CompressionLevel Optimal
+tar.exe -a -c -f $zipPath -C $distPath .
 Write-Output $zipPath

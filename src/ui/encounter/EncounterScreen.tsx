@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion } from "motion/react";
 import { BALANCE } from "../../content/balance";
@@ -12,6 +12,13 @@ import { audioManager } from "../../audio/AudioManager";
 import { useGameStore } from "../../store/gameStore";
 import { useUiStore } from "../../store/uiStore";
 import { GameButton } from "../components/GameButton";
+import {
+  ENEMY_RETALIATION_RESOLUTION_MS,
+  ENEMY_RETALIATION_START_MS,
+  REDUCED_MOTION_RESOLUTION_MS,
+  STANDARD_RESOLUTION_MS,
+  isEnemyRetaliating,
+} from "./combatTiming";
 
 const OPERATORS: Array<{ value: Operator; symbol: string; key: string; name: string }> = [
   { value: "add", symbol: "+", key: "+", name: "add" },
@@ -68,13 +75,13 @@ function DamageGuide() {
       <p className="mb-1.5 text-[9px] font-black uppercase tracking-widest text-gold lg:text-[10px]">
         Accuracy → base power
       </p>
-      <div className="grid grid-cols-4 gap-1 lg:grid-cols-2">
+      <div className="space-y-1">
         {tiers.map(([label, damage]) => (
           <div
             key={label}
-            className="border border-parchment/10 bg-ink/40 px-1 py-1.5 text-center lg:text-left"
+            className="flex items-center justify-between border border-parchment/10 bg-ink/40 px-2 py-1.5"
           >
-            <span className="block text-[8px] font-bold text-parchment/55 lg:text-[9px]">
+            <span className="text-[8px] font-bold text-parchment/55 lg:text-[9px]">
               {label}
             </span>
             <strong className="text-xs text-gold lg:text-sm">{damage}</strong>
@@ -307,12 +314,17 @@ function RoundResolution({ run }: { run: RunState }) {
           {round.hpDamage < afterArmor ? ` (enemy only had ${round.enemyHpBefore} HP)` : ""}
         </p>
       </div>
-      <div className="mt-3 border border-parchment/20 bg-ink/70 p-3 text-left text-xs text-parchment/70 sm:mt-4 sm:p-4 sm:text-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+        className="mt-3 border border-parchment/20 bg-ink/70 p-3 text-left text-xs text-parchment/70 sm:mt-4 sm:p-4 sm:text-sm"
+      >
         <span className="mb-1 block text-[9px] font-black uppercase tracking-wider text-zinc-500">
           Enemy response
         </span>
         {round.enemyAction}
-      </div>
+      </motion.div>
       <GameButton
         className="mt-4 sm:mt-5"
         full
@@ -388,6 +400,7 @@ function CombatImpact({ run }: { run: RunState }) {
   const [phase, setPhase] = useState(reducedMotion ? 3 : 0);
   const accuracy = accuracyTier(distance);
   const modifier = round.damageDealt - round.resolution.baseDamage;
+  const enemyRetaliating = isEnemyRetaliating(run);
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -395,9 +408,12 @@ function CombatImpact({ run }: { run: RunState }) {
       window.setTimeout(() => setPhase(1), 1_150),
       window.setTimeout(() => setPhase(2), 2_050),
       window.setTimeout(() => setPhase(3), 2_850),
+      ...(enemyRetaliating
+        ? [window.setTimeout(() => setPhase(4), ENEMY_RETALIATION_START_MS)]
+        : []),
     ];
     return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [reducedMotion]);
+  }, [enemyRetaliating, reducedMotion]);
 
   return (
     <motion.section
@@ -502,7 +518,7 @@ function CombatImpact({ run }: { run: RunState }) {
           key={phase}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0, scale: phase === 3 ? [0.85, 1.18, 1] : 1 }}
-          className={`relative mt-3 font-display text-xl font-black uppercase sm:text-3xl ${phase === 3 && hit ? "text-yellow-400" : "text-zinc-400"}`}
+          className={`relative mt-3 font-display text-xl font-black uppercase sm:text-3xl ${phase >= 3 && hit ? "text-yellow-400" : "text-zinc-400"}`}
         >
           {phase === 0
             ? "Counting answer…"
@@ -510,9 +526,11 @@ function CombatImpact({ run }: { run: RunState }) {
               ? "Measuring distance…"
               : phase === 2
                 ? "Charging attack…"
-                : hit
-                  ? `Fire · ${round.damageDealt} attack · ${round.armorBlocked} blocked · ${round.hpDamage} HP`
-                  : "Attack fizzled"}
+                : phase === 3
+                  ? hit
+                    ? `Fire · ${round.damageDealt} attack · ${round.armorBlocked} blocked · ${round.hpDamage} HP`
+                    : "Attack fizzled"
+                  : `Enemy retaliation · ${encounter.enemy.currentIntent.label}`}
         </motion.strong>
       </AnimatePresence>
     </motion.section>
@@ -613,6 +631,75 @@ function AttackFx({ run }: { run: RunState }) {
         className="absolute inset-y-0 right-0 hidden w-[22%] bg-yellow-300 mix-blend-screen lg:block"
       />
     </div>
+  );
+}
+
+function rollingTarget(target: number, step: number): number {
+  return 100 + ((target - 100 + step * 137) % 900);
+}
+
+function TargetReveal({
+  target,
+  reducedMotion,
+  onComplete,
+}: {
+  target: number;
+  reducedMotion: boolean;
+  onComplete: () => void;
+}) {
+  const [locked, setLocked] = useState(reducedMotion);
+  const [display, setDisplay] = useState(reducedMotion ? target : rollingTarget(target, 1));
+
+  useEffect(() => {
+    if (reducedMotion) {
+      const timeout = window.setTimeout(onComplete, 180);
+      return () => window.clearTimeout(timeout);
+    }
+
+    let step = 1;
+    const rolling = window.setInterval(() => setDisplay(rollingTarget(target, ++step)), 130);
+    const locked = window.setTimeout(() => {
+      window.clearInterval(rolling);
+      setDisplay(target);
+      setLocked(true);
+    }, 1_750);
+    const complete = window.setTimeout(onComplete, 2_450);
+    return () => {
+      window.clearInterval(rolling);
+      window.clearTimeout(locked);
+      window.clearTimeout(complete);
+    };
+  }, [onComplete, reducedMotion, target]);
+
+  return (
+    <motion.div
+      aria-label="Target selection"
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex min-h-52 w-full items-center justify-center overflow-hidden py-3"
+    >
+      <section className="relative w-full max-w-md overflow-hidden border border-gold/50 bg-panel p-6 text-center shadow-[0_0_48px_rgba(234,179,8,0.16)] sm:p-8">
+        <motion.div
+          aria-hidden="true"
+          animate={{ opacity: locked ? 1 : [0.45, 1, 0.45] }}
+          transition={{ duration: 0.7, repeat: locked ? 0 : Infinity, ease: "easeInOut" }}
+          className="absolute inset-x-0 top-0 h-1 bg-gold"
+        />
+        <p className="text-[10px] font-black uppercase tracking-[0.32em] text-gold sm:text-xs">
+          Drawing target
+        </p>
+        <strong
+          aria-hidden="true"
+          className="mt-4 block border-y border-gold/40 py-2 font-display text-7xl font-black tabular-nums text-gold shadow-[inset_0_0_18px_rgba(234,179,8,0.18)] sm:text-8xl"
+        >
+          {display}
+        </strong>
+        <span className="sr-only">Target selected: {target}</span>
+        <p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-parchment/50">
+          {locked ? "Target locked" : "Rolling numbers…"}
+        </p>
+      </section>
+    </motion.div>
   );
 }
 
@@ -738,22 +825,46 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
   const instructionsOpen = useUiStore((state) => state.instructionsOpen);
   const audioOpen = useUiStore((state) => state.audioOpen);
   const reducedMotion = useUiStore((state) => state.reducedMotion);
+  const [revealedTargetPuzzleId, setRevealedTargetPuzzleId] = useState<string | null>(null);
   const [revealedResolutionKey, setRevealedResolutionKey] = useState<string | null>(null);
   const [landedResolutionKey, setLandedResolutionKey] = useState<string | null>(null);
-  const paused = dialogSlot !== null || instructionsOpen || audioOpen;
+  const targetRevealKey = encounter?.status === "puzzle" ? encounter.puzzle.puzzleId : null;
+  const showingTargetReveal = targetRevealKey !== null && targetRevealKey !== revealedTargetPuzzleId;
+  const completeTargetReveal = useCallback(() => {
+    if (targetRevealKey) setRevealedTargetPuzzleId(targetRevealKey);
+  }, [targetRevealKey]);
+  const paused = dialogSlot !== null || instructionsOpen || audioOpen || showingTargetReveal;
   const resolutionKey = encounter?.lastRound ? encounter.puzzle.puzzleId : null;
+  const enemyRetaliating = isEnemyRetaliating(run);
+  const combatDefeatPending = run.status === "defeat" && enemyRetaliating;
   const showingImpact = Boolean(
-    encounter && encounter.status !== "puzzle" && resolutionKey !== revealedResolutionKey,
+    encounter &&
+    encounter.status !== "puzzle" &&
+    (resolutionKey !== revealedResolutionKey || combatDefeatPending),
   );
 
   useEffect(() => {
     if (!showingImpact || !resolutionKey) return;
     const timeout = window.setTimeout(
-      () => setRevealedResolutionKey(resolutionKey),
-      reducedMotion ? 240 : 4_150,
+      () => {
+        if (combatDefeatPending) dispatch({ type: "COMBAT_DEFEAT_REVEALED" });
+        else setRevealedResolutionKey(resolutionKey);
+      },
+      reducedMotion
+        ? REDUCED_MOTION_RESOLUTION_MS
+        : enemyRetaliating
+          ? ENEMY_RETALIATION_RESOLUTION_MS
+          : STANDARD_RESOLUTION_MS,
     );
     return () => window.clearTimeout(timeout);
-  }, [reducedMotion, resolutionKey, showingImpact]);
+  }, [
+    combatDefeatPending,
+    dispatch,
+    enemyRetaliating,
+    reducedMotion,
+    resolutionKey,
+    showingImpact,
+  ]);
 
   useEffect(() => {
     if (!showingImpact || !resolutionKey) return;
@@ -957,7 +1068,7 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
           <div className="min-w-24 border border-gold/35 bg-gold px-5 py-2.5 text-center text-ink shadow-[0_8px_24px_rgba(234,179,8,0.16)] sm:min-w-32 sm:px-7 sm:py-3">
             <span className="sr-only">Target </span>
             <strong className="font-display text-4xl font-black leading-none sm:text-5xl">
-              {puzzle.target}
+              {showingTargetReveal ? "???" : puzzle.target}
             </strong>
           </div>
           <div className="justify-self-end text-right">
@@ -967,7 +1078,14 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
 
         <div className="min-h-0 flex-1">
           <AnimatePresence mode="sync">
-            {active ? (
+            {showingTargetReveal ? (
+              <TargetReveal
+                key={puzzle.puzzleId}
+                target={puzzle.target}
+                reducedMotion={reducedMotion}
+                onComplete={completeTargetReveal}
+              />
+            ) : active ? (
               <motion.div
                 key="workspace"
                 initial={{ opacity: 0 }}

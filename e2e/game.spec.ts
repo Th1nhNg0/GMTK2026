@@ -10,14 +10,15 @@ async function startRun(page: Page): Promise<void> {
 
 async function enterNormalEncounter(page: Page): Promise<void> {
   const routes = page.getByRole("button", { name: "Encounter, available" });
-  await expect(routes).toHaveCount(3);
-  await routes.nth(1).click();
+  await expect(routes).toHaveCount(1);
+  await routes.click();
   const intro = page.getByLabel("Opponent introduction");
   await expect(intro).toBeVisible();
   await expect(intro.getByRole("img", { name: "Sumslinger enters battle" })).toBeVisible();
   await expect(intro.getByText("Quick Sum", { exact: true })).toBeVisible();
   await expectPageToFitViewport(page);
   await page.getByRole("button", { name: "Start puzzle against Sumslinger" }).click();
+  await expect(page.getByLabel("Target selection")).toBeVisible();
   await expect(page.getByLabel("Puzzle 1 of 4")).toBeVisible();
   await expect(page.getByText("0 exact", { exact: false })).toBeVisible();
 }
@@ -67,6 +68,26 @@ test("contains scrolling inside the branching route map", async ({ page }) => {
   }));
   expect(mapOverflow.scrollHeight).toBeGreaterThan(mapOverflow.clientHeight);
   expect(mapOverflow.connectorCount).toBeGreaterThan(0);
+});
+
+test("rolls the target before opening a puzzle", async ({ page }) => {
+  await startRun(page);
+  await openDebugTools(page);
+  await page.getByRole("button", { name: "normal", exact: true }).click();
+  await closeDebugTools(page);
+  await page.getByRole("button", { name: "Start puzzle against Sumslinger" }).click();
+
+  const targetSelection = page.getByLabel("Target selection");
+  await expect(targetSelection).toBeVisible();
+  const rollingNumber = targetSelection.locator("strong");
+  await expect(rollingNumber).toHaveCount(1);
+  const firstNumber = await rollingNumber.innerText();
+  await expect.poll(() => rollingNumber.innerText()).not.toBe(firstNumber);
+  await expect(page.getByLabel("Enemy")).toBeVisible();
+  await expect(page.getByLabel("Consumables and damage guide")).toBeVisible();
+  await expect(page.getByText("Exact", { exact: true }).locator(".."))
+    .toHaveCSS("display", "flex");
+  await expect(page.getByLabel("Puzzle 1 of 4")).toBeVisible();
 });
 
 test("starts a run, performs an exact operation, and claims a reward", async ({ page }) => {
@@ -125,6 +146,23 @@ test("supports keyboard-only number operations", async ({ page }) => {
   await page.keyboard.press("2");
   await page.keyboard.press("Shift+=");
   await expect(page.getByLabel("Attack resolving")).toBeVisible();
+});
+
+test("animates an enemy retaliation into the player health badge", async ({ page }) => {
+  await startRun(page);
+  await enterNormalEncounter(page);
+  await openDebugTools(page);
+  await page.getByRole("button", { name: "Exact setup" }).click();
+  await closeDebugTools(page);
+
+  await page.getByRole("button", { name: "50, available" }).nth(0).click();
+  await page.getByRole("button", { name: "50, available" }).click();
+  await page.getByRole("button", { name: "add" }).click();
+
+  await expect(page.getByTestId("enemy-retaliation")).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByLabel("50 of 50 health")).toBeVisible();
+  await expect(page.getByText("Enemy retaliation · Quick Sum")).toBeVisible();
+  await expect(page.getByLabel("46 of 50 health")).toBeVisible({ timeout: 2_000 });
 });
 
 test("keeps the six starting-number slots fixed when a result is created", async ({ page }) => {
@@ -230,6 +268,7 @@ test("reaches defeat through a deterministic debug path", async ({ page }) => {
   await page.getByRole("button", { name: "Player HP 1" }).click();
   await page.getByRole("button", { name: "60×" }).click();
   await closeDebugTools(page);
+  await expect(page.getByText("Enemy retaliation · Quick Sum")).toBeVisible({ timeout: 9_000 });
   await expect(page.getByRole("heading", { name: "Time's up" })).toBeVisible({ timeout: 3_000 });
 });
 

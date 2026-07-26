@@ -8,6 +8,8 @@ import { useUiStore } from "../store/uiStore";
 import { GlobalDialogs } from "../ui/components/GlobalDialogs";
 import { DebugPanel } from "../ui/components/DebugPanel";
 import { RunHeader } from "../ui/components/RunHeader";
+import { EnemyAttackFx } from "../ui/encounter/EnemyAttackFx";
+import { ENEMY_RETALIATION_IMPACT_MS, PLAYER_ATTACK_IMPACT_MS } from "../ui/encounter/combatTiming";
 import { ScreenRouter } from "./ScreenRouter";
 
 function soundForEffect(effect: GameEffect): SoundEvent | undefined {
@@ -37,7 +39,9 @@ export function App() {
       const sound = soundForEffect(effect);
       if (!sound) continue;
       if (effect.type === "ENEMY_DAMAGED" && !reducedMotion) {
-        timers.push(window.setTimeout(() => audioManager.play(sound), 3_450));
+        timers.push(window.setTimeout(() => audioManager.play(sound), PLAYER_ATTACK_IMPACT_MS));
+      } else if (effect.type === "PLAYER_DAMAGED" && !reducedMotion) {
+        timers.push(window.setTimeout(() => audioManager.play(sound), ENEMY_RETALIATION_IMPACT_MS));
       } else {
         audioManager.play(sound);
       }
@@ -67,7 +71,10 @@ export function App() {
         onPointerDownCapture={() => void audioManager.unlock()}
       >
         {showRunHeader && game.run && <RunHeader run={game.run} />}
-        <AnimatePresence mode="sync">
+        {game.screen === "encounter" && game.run && (
+          <EnemyAttackFx run={game.run} reducedMotion={reducedMotion} />
+        )}
+        <AnimatePresence mode="popLayout">
           <motion.div
             key={game.screen}
             initial={{ opacity: 0, y: reducedMotion ? 0 : 8 }}

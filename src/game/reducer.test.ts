@@ -33,7 +33,7 @@ describe("game reducer", () => {
   it("uses a fixed enemy and opening intent for a given floor", () => {
     const encounterFor = (seed: number) => {
       const started = reduceGame({ screen: "title" }, { type: "RUN_STARTED", seed }).state;
-      return reduceGame(started, { type: "MAP_NODE_SELECTED", nodeId: "node-0-0" }).state.run!
+      return reduceGame(started, { type: "MAP_NODE_SELECTED", nodeId: "node-0-1" }).state.run!
         .encounter!;
     };
     const first = encounterFor(1);
@@ -125,6 +125,22 @@ describe("game reducer", () => {
       hpDamage: 1,
     });
     expect(state.run?.hp).toBe(hpBefore);
+  });
+
+  it("shows a lethal enemy attack before revealing defeat", () => {
+    let state = startEncounter();
+    state = { ...state, run: { ...state.run!, hp: 1 } };
+    state = reduceGame(state, {
+      type: "PUZZLE_ACTION",
+      action: { type: "RESULT_SUBMITTED", reason: "timeout" },
+    }).state;
+
+    expect(state.screen).toBe("encounter");
+    expect(state.run?.status).toBe("defeat");
+    expect(state.run?.encounter?.lastRound?.playerDamageTaken).toBeGreaterThan(0);
+
+    state = reduceGame(state, { type: "COMBAT_DEFEAT_REVEALED" }).state;
+    expect(state.screen).toBe("defeat");
   });
 
   it("consumes a consumable from one of three slots", () => {

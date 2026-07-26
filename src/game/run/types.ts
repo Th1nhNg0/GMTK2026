@@ -134,6 +134,7 @@ export interface GameState {
 export type GameAction =
   | { type: "RUN_STARTED"; seed: number }
   | { type: "RETURNED_TO_TITLE" }
+  | { type: "COMBAT_DEFEAT_REVEALED" }
   | { type: "MAP_NODE_SELECTED"; nodeId: string }
   | { type: "PUZZLE_ACTION"; action: PuzzleAction }
   | { type: "ENCOUNTER_CONTINUED" }

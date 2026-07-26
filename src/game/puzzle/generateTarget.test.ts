@@ -14,12 +14,16 @@ describe("reachable target generation", () => {
     expect(reachableTargetDepths(numbers).get(first.target)).toBe(first.minimumOperations);
   });
 
-  it("chooses the same measured target regardless of RNG state", () => {
+  it("chooses a seeded random target from equally suitable exact answers", () => {
     const numbers = [100, 50, 25, 8, 7, 3];
-    const first = generateTarget(numbers, createRng(1));
-    const second = generateTarget(numbers, createRng(999_999));
-    expect(first.target).toBe(second.target);
-    expect(first.minimumOperations).toBe(second.minimumOperations);
+    const generated = Array.from({ length: 10 }, (_, seed) =>
+      generateTarget(numbers, createRng(seed + 1)),
+    );
+    expect(new Set(generated.map(({ target }) => target)).size).toBeGreaterThan(1);
+    for (const result of generated) {
+      expect(result.minimumOperations).toBe(2);
+      expect(reachableTargetDepths(numbers).get(result.target)).toBe(result.minimumOperations);
+    }
   });
 
   it("selects targets by requested solution depth", () => {

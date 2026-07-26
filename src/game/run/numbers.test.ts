@@ -21,13 +21,17 @@ describe("number sequence", () => {
     expect(drawn.numberSequence.drawPile).toHaveLength(18);
     expect(recycleHand(drawn.numberSequence, drawn.hand).discardPile).toHaveLength(6);
     const values = new Map(cards.map((card) => [card.definitionId, card.value]));
-    expect(drawn.hand.map((id) => values.get(id))).toEqual([25, 1, 1, 2, 2, 3]);
+    const hand = drawn.hand.map((id) => values.get(id)!);
+    expect(hand.filter((value) => value >= 25)).toHaveLength(1);
+    expect(hand.filter((value) => value < 25)).toHaveLength(5);
   });
 
-  it("builds the same balanced hand order for every seed", () => {
+  it("shuffles balanced hands from the run seed", () => {
     const cards = createNumberSet();
-    expect(createEncounterSequence(cards, createRng(1)).numberSequence).toEqual(
-      createEncounterSequence(cards, createRng(999_999)).numberSequence,
+    const first = createEncounterSequence(cards, createRng(1));
+    expect(createEncounterSequence(cards, createRng(1))).toEqual(first);
+    expect(createEncounterSequence(cards, createRng(999_999)).numberSequence).not.toEqual(
+      first.numberSequence,
     );
   });
 

@@ -104,8 +104,144 @@ function New-BrandImage {
   $bitmap.Dispose()
 }
 
+function Draw-CoverImage {
+  param(
+    [Parameter(Mandatory = $true)]$Graphics,
+    [Parameter(Mandatory = $true)]$Image,
+    [Parameter(Mandatory = $true)][int]$Width,
+    [Parameter(Mandatory = $true)][int]$Height
+  )
+
+  $scale = [Math]::Max($Width / $Image.Width, $Height / $Image.Height)
+  $scaledWidth = [int][Math]::Ceiling($Image.Width * $scale)
+  $scaledHeight = [int][Math]::Ceiling($Image.Height * $scale)
+  $x = [int](($Width - $scaledWidth) / 2)
+  $y = [int](($Height - $scaledHeight) / 2)
+  $Graphics.DrawImage($Image, $x, $y, $scaledWidth, $scaledHeight)
+}
+
+function New-PromoImage {
+  param(
+    [Parameter(Mandatory = $true)][int]$Width,
+    [Parameter(Mandatory = $true)][int]$Height,
+    [Parameter(Mandatory = $true)][string]$OutputPath,
+    [Parameter(Mandatory = $true)][string]$BackgroundPath,
+    [Parameter(Mandatory = $true)][bool]$Wide
+  )
+
+  $bitmap = New-Object System.Drawing.Bitmap($Width, $Height)
+  $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+  $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+  $graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
+  $background = [System.Drawing.Image]::FromFile($BackgroundPath)
+
+  $paper = [System.Drawing.ColorTranslator]::FromHtml("#ffffff")
+  $ink = [System.Drawing.ColorTranslator]::FromHtml("#101012")
+  $gold = [System.Drawing.ColorTranslator]::FromHtml("#eab308")
+  $overlay = [System.Drawing.Color]::FromArgb(220, 16, 16, 18)
+  $accent = [System.Drawing.Color]::FromArgb(238, 234, 179, 8)
+
+  Draw-CoverImage -Graphics $graphics -Image $background -Width $Width -Height $Height
+  $graphics.FillRectangle((New-Object System.Drawing.SolidBrush($overlay)), 0, 0, [int]($Width * 0.56), $Height)
+  $graphics.FillRectangle((New-Object System.Drawing.SolidBrush($accent)), 0, [int]($Height * 0.84), [int]($Width * 0.52), 6)
+
+  if ($Wide) {
+    $titleFont = New-Object System.Drawing.Font("Arial Black", 104, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $taglineFont = New-Object System.Drawing.Font("Arial", 31, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $copyFont = New-Object System.Drawing.Font("Arial", 24, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $x = 78
+    $graphics.DrawString("LAST SUM", $titleFont, (New-Object System.Drawing.SolidBrush($paper)), $x, 124)
+    $graphics.DrawString("STANDING", $titleFont, (New-Object System.Drawing.SolidBrush($gold)), $x, 246)
+    $graphics.DrawString("A 45-SECOND ARITHMETIC ROGUELIKE", $taglineFont, (New-Object System.Drawing.SolidBrush($paper)), $x + 5, 397)
+    $graphics.DrawString("SIX NUMBERS  /  ONE TARGET  /  COUNTDOWN", $copyFont, (New-Object System.Drawing.SolidBrush($paper)), $x + 5, 512)
+  }
+  else {
+    $titleFont = New-Object System.Drawing.Font("Arial Black", 72, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $taglineFont = New-Object System.Drawing.Font("Arial", 23, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $copyFont = New-Object System.Drawing.Font("Arial", 18, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $x = 54
+    $graphics.DrawString("LAST SUM", $titleFont, (New-Object System.Drawing.SolidBrush($paper)), $x, 105)
+    $graphics.DrawString("STANDING", $titleFont, (New-Object System.Drawing.SolidBrush($gold)), $x, 190)
+    $graphics.DrawString("A 45-SECOND ARITHMETIC ROGUELIKE", $taglineFont, (New-Object System.Drawing.SolidBrush($paper)), $x + 3, 307)
+    $graphics.DrawString("SIX NUMBERS  /  ONE TARGET  /  COUNTDOWN", $copyFont, (New-Object System.Drawing.SolidBrush($paper)), $x + 3, 405)
+  }
+
+  $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
+  $titleFont.Dispose()
+  $taglineFont.Dispose()
+  $copyFont.Dispose()
+  $background.Dispose()
+  $graphics.Dispose()
+  $bitmap.Dispose()
+}
+
+function New-FaviconImage {
+  param(
+    [Parameter(Mandatory = $true)][int]$Size,
+    [Parameter(Mandatory = $true)][string]$OutputPath
+  )
+
+  $bitmap = New-Object System.Drawing.Bitmap($Size, $Size)
+  $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+  $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+  $graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
+  $ink = [System.Drawing.ColorTranslator]::FromHtml("#18181b")
+  $gold = [System.Drawing.ColorTranslator]::FromHtml("#eab308")
+  $paper = [System.Drawing.ColorTranslator]::FromHtml("#ffffff")
+  $grid = [System.Drawing.Color]::FromArgb(38, 255, 255, 255)
+  $graphics.Clear($ink)
+  $gridPen = New-Object System.Drawing.Pen($grid, 2)
+  for ($x = 0; $x -le $Size; $x += 32) { $graphics.DrawLine($gridPen, $x, 0, $x, $Size) }
+  for ($y = 0; $y -le $Size; $y += 32) { $graphics.DrawLine($gridPen, 0, $y, $Size, $y) }
+  $goldPen = New-Object System.Drawing.Pen($gold, 16)
+  $graphics.DrawEllipse($goldPen, 43, 43, $Size - 86, $Size - 86)
+  $targetFont = New-Object System.Drawing.Font("Arial Black", 132, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+  $graphics.DrawString("743", $targetFont, (New-Object System.Drawing.SolidBrush($paper)), 73, 169)
+  $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
+  $targetFont.Dispose()
+  $goldPen.Dispose()
+  $gridPen.Dispose()
+  $graphics.Dispose()
+  $bitmap.Dispose()
+}
+
+function New-LogoImage {
+  param(
+    [Parameter(Mandatory = $true)][string]$OutputPath
+  )
+
+  $bitmap = New-Object System.Drawing.Bitmap(1600, 560, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+  $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+  $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+  $graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
+  $graphics.Clear([System.Drawing.Color]::Transparent)
+  $paper = [System.Drawing.ColorTranslator]::FromHtml("#ffffff")
+  $gold = [System.Drawing.ColorTranslator]::FromHtml("#eab308")
+  $titleFont = New-Object System.Drawing.Font("Arial Black", 176, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+  $graphics.DrawString("LAST SUM", $titleFont, (New-Object System.Drawing.SolidBrush($paper)), 30, 15)
+  $graphics.DrawString("STANDING", $titleFont, (New-Object System.Drawing.SolidBrush($gold)), 30, 218)
+  $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
+  $titleFont.Dispose()
+  $graphics.Dispose()
+  $bitmap.Dispose()
+}
+
 New-BrandImage -Width 630 -Height 500 -OutputPath (Join-Path $assetPath "cover.png") -Compact $false
 New-BrandImage -Width 960 -Height 240 -OutputPath (Join-Path $assetPath "banner.png") -Compact $true
 
+$promoPath = Join-Path $assetPath "promo"
+New-Item -ItemType Directory -Force -Path $promoPath | Out-Null
+$promoBackground = Join-Path $promoPath "promo-background-ai-v1.png"
+if (Test-Path $promoBackground) {
+  New-PromoImage -Width 1200 -Height 630 -OutputPath (Join-Path $promoPath "social-media.png") -BackgroundPath $promoBackground -Wide $false
+  New-PromoImage -Width 1680 -Height 720 -OutputPath (Join-Path $promoPath "wide-cover.png") -BackgroundPath $promoBackground -Wide $true
+}
+New-FaviconImage -Size 512 -OutputPath (Join-Path $promoPath "favicon.png")
+New-LogoImage -OutputPath (Join-Path $promoPath "logo.png")
+
 Write-Output (Join-Path $assetPath "cover.png")
 Write-Output (Join-Path $assetPath "banner.png")
+Write-Output (Join-Path $promoPath "social-media.png")
+Write-Output (Join-Path $promoPath "wide-cover.png")
+Write-Output (Join-Path $promoPath "favicon.png")
+Write-Output (Join-Path $promoPath "logo.png")

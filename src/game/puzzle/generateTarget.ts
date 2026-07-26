@@ -1,4 +1,4 @@
-import type { RngState } from "../rng";
+import { randomInt, type RngState } from "../rng";
 import { calculateOperation } from "./calculateOperation";
 import type { PuzzleDifficultyProfile } from "./difficulty";
 import type { Operator } from "./types";
@@ -125,11 +125,19 @@ export function generateTarget(
   if (!candidates.length) {
     return { target: difficulty.minimumTarget, minimumOperations: 0, rng };
   }
-  const [target, minimumOperations] = candidates.sort((left, right) =>
+  const ranked = candidates.sort((left, right) =>
     compareScores(
       targetScore(left[0], left[1], difficulty),
       targetScore(right[0], right[1], difficulty),
     ),
-  )[0]!;
-  return { target, minimumOperations, rng };
+  );
+  const best = ranked[0]!;
+  const bestScore = targetScore(best[0], best[1], difficulty).slice(0, 3);
+  const equallySuitable = ranked.filter(
+    ([target, operations]) =>
+      compareScores(targetScore(target, operations, difficulty).slice(0, 3), bestScore) === 0,
+  );
+  const pick = randomInt(rng, 0, equallySuitable.length - 1);
+  const [target, minimumOperations] = equallySuitable[pick.value]!;
+  return { target, minimumOperations, rng: pick.rng };
 }

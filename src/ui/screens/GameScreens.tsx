@@ -193,7 +193,7 @@ export function MapScreen({ run }: { run: RunState }) {
                 aria-label={`${meta.label}, ${node.status}`}
                 data-map-node-status={node.status}
                 style={{ left: `${((node.column + 0.5) / 3) * 100}%`, top: yForRow(node.row) }}
-                className={`absolute flex h-12 w-20 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 border bg-[#1b1a17] px-2 text-left transition-colors sm:h-14 sm:w-24 sm:gap-2 sm:px-3 ${meta.tone} ${available ? "cursor-pointer !border-gold !bg-gold !text-ink hover:!bg-[#d8bb6d]" : "cursor-default border-parchment/30"} ${completed ? "!border-mint/60 !bg-mint/10 !text-mint" : ""}`}
+                className={`absolute flex h-12 w-20 -translate-x-1/2 -translate-y-1/2 items-center gap-1 border bg-[#1b1a17] px-1 text-left transition-colors sm:h-14 sm:w-24 sm:px-2 ${meta.tone} ${available ? "cursor-pointer !border-gold !bg-gold !text-ink hover:!bg-[#d8bb6d]" : "cursor-default border-parchment/30"} ${completed ? "!border-mint/60 !bg-mint/10 !text-mint" : ""}`}
               >
                 <span className="text-lg font-black sm:text-xl" aria-hidden="true">
                   {completed ? "✓" : meta.icon}

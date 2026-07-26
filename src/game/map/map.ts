@@ -2,17 +2,19 @@ import type { RngState } from "../rng";
 import type { MapNode, MapNodeType, RunMap } from "../run/types";
 
 const ROW_PATTERNS: MapNodeType[][] = [
-  ["normal", "normal", "normal"],
-  ["normal", "upgrade", "normal"],
-  ["event", "rest", "event"],
-  ["normal", "elite", "normal"],
-  ["shop", "normal", "shop"],
-  ["normal", "upgrade", "normal"],
-  ["event", "rest", "event"],
-  ["elite", "normal", "elite"],
-  ["shop", "rest", "shop"],
-  ["elite", "normal", "elite"],
+  ["normal"],
+  ["normal", "normal"],
+  ["normal"],
+  ["event", "elite", "upgrade"],
+  ["rest"],
+  ["shop", "normal", "event"],
+  ["normal"],
+  ["elite", "normal", "event"],
+  ["rest"],
+  ["elite", "normal"],
 ];
+
+const COLUMNS_BY_WIDTH = [[1], [0, 2], [0, 1, 2]];
 
 export function generateMap(rng: RngState): { map: RunMap; rng: RngState } {
   const nextRng = rng;
@@ -21,8 +23,13 @@ export function generateMap(rng: RngState): { map: RunMap; rng: RngState } {
   for (let row = 0; row < ROW_PATTERNS.length; row += 1) {
     const pattern = ROW_PATTERNS[row];
     if (!pattern) continue;
-    for (let column = 0; column < 3; column += 1) {
-      const type = pattern[column] as MapNodeType;
+    const columns = COLUMNS_BY_WIDTH[pattern.length - 1] ?? [];
+    const nextColumns =
+      COLUMNS_BY_WIDTH[(ROW_PATTERNS[row + 1]?.length ?? 1) - 1] ?? [1];
+    const connectionCount = pattern.length === 1 ? nextColumns.length : 1;
+    for (let index = 0; index < pattern.length; index += 1) {
+      const column = columns[index] as number;
+      const type = pattern[index] as MapNodeType;
       nodes.push({
         id: `node-${row}-${column}`,
         row,
@@ -31,9 +38,10 @@ export function generateMap(rng: RngState): { map: RunMap; rng: RngState } {
         connections:
           row === ROW_PATTERNS.length - 1
             ? ["node-10-1"]
-            : Array.from(
-                new Set([column, column === 0 ? 1 : column === 2 ? 1 : row % 2 === 0 ? 2 : 0]),
-              ).map((nextColumn) => `node-${row + 1}-${nextColumn}`),
+            : [...nextColumns]
+                .sort((left, right) => Math.abs(left - column) - Math.abs(right - column))
+                .slice(0, connectionCount)
+                .map((nextColumn) => `node-${row + 1}-${nextColumn}`),
         status: row === 0 ? "available" : "locked",
       });
     }

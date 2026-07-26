@@ -1,4 +1,4 @@
-import type { RngState } from "../rng";
+import { shuffle, type RngState } from "../rng";
 import type { NumberCardDefinition, NumberSequenceState } from "./types";
 
 export function createNumberSet(): NumberCardDefinition[] {
@@ -31,18 +31,26 @@ export function createEncounterSequence(
     .filter((card) => card.value < 25)
     .sort(byValueThenId)
     .map((card) => card.definitionId);
+  const shuffledLarge = shuffle(rng, large);
+  const shuffledSmall = shuffle(shuffledLarge.rng, small);
+  const largePile = shuffledLarge.values;
+  const smallPile = shuffledSmall.values;
   const drawPile: string[] = [];
 
-  while (large.length > 0 || small.length > 0) {
-    const largeCard = large.shift();
+  while (largePile.length > 0 || smallPile.length > 0) {
+    const largeCard = largePile.shift();
     if (largeCard) drawPile.push(largeCard);
-    for (let index = 0; index < 5 && (small.length > 0 || large.length > 0); index += 1) {
-      const card = small.shift() ?? large.shift();
+    for (
+      let index = 0;
+      index < 5 && (smallPile.length > 0 || largePile.length > 0);
+      index += 1
+    ) {
+      const card = smallPile.shift() ?? largePile.shift();
       if (card) drawPile.push(card);
     }
   }
 
-  return { numberSequence: { drawPile, discardPile: [] }, rng };
+  return { numberSequence: { drawPile, discardPile: [] }, rng: shuffledSmall.rng };
 }
 
 export function drawHand(

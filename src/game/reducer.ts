@@ -324,6 +324,7 @@ function resolveRound(
   const acted = applyEnemyIntent(nextRun, { ...encounter, enemy });
   nextRun = acted.run;
   enemy = acted.encounter.enemy;
+  const enemyRetaliated = encounter.enemy.currentIntent.type === "attack";
   const resolvedEncounter: EncounterState = {
     ...encounter,
     enemy,
@@ -348,7 +349,7 @@ function resolveRound(
   if (nextRun.hp <= 0) {
     return {
       run: { ...nextRun, status: "defeat", defeatReason: "Your health reached zero." },
-      screen: "defeat",
+      screen: enemyRetaliated ? "encounter" : "defeat",
       effects,
     };
   }
@@ -359,7 +360,7 @@ function resolveRound(
         status: "defeat",
         defeatReason: `${enemy.name} survived all ${encounter.maxRounds} puzzles.`,
       },
-      screen: "defeat",
+      screen: enemyRetaliated ? "encounter" : "defeat",
       effects,
     };
   }
@@ -606,6 +607,10 @@ export function reduceGame(state: GameState, action: GameAction): EngineTransiti
     ]);
   }
   if (action.type === "RETURNED_TO_TITLE") return result(initialGameState);
+  if (action.type === "COMBAT_DEFEAT_REVEALED") {
+    if (state.screen !== "encounter" || state.run?.status !== "defeat") return result(state);
+    return result({ ...state, screen: "defeat" });
+  }
   const run = state.run;
   if (!run || run.status !== "active") return message(state, "Start a new run first.");
 

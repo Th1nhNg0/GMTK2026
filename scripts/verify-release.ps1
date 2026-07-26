@@ -9,6 +9,17 @@ if (-not (Test-Path -LiteralPath $zipPath -PathType Leaf)) {
   throw "Release ZIP is missing: $zipPath"
 }
 
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+try {
+  if ($archive.Entries.FullName -match '\\') {
+    throw "Release ZIP contains Windows path separators; itch.io will not find nested assets."
+  }
+}
+finally {
+  $archive.Dispose()
+}
+
 $systemTemp = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
 $tempRoot = [System.IO.Path]::GetFullPath(
   [System.IO.Path]::Combine($systemTemp, "last-sum-standing-release-$([System.Guid]::NewGuid())")
