@@ -8,9 +8,9 @@ Six numbers enter. One answer leaves. Build legal whole-number equations, turn t
 
 Puzzle difficulty is directed rather than randomly selected. Early floors use readable two-step targets, the middle introduces three-step solutions, late elites require four steps, and the boss advances to five-step targets. Every displayed target is selected from values that are exactly reachable with the current six numbers. Hands use a stable Countdown-style composition of one large and five small numbers.
 
-Encounter length is derived from enemy HP using a reliable seven-damage answer plus one recovery puzzle: normals receive four puzzles, elites five, and the boss six. The combat header records exact, close, and missed attempts, while each submitted answer passes through an Answer → Accuracy → Power score sequence before impact.
+Encounters continue until either the monster or the player runs out of health. The combat header records exact, close, and missed attempts, while each submitted answer passes through an Answer → Accuracy → Power score sequence before impact.
 
-Each new fight opens with a brief, skippable opponent reveal showing the monster's health, encounter length, opening intent, and any special passive. The puzzle clock starts only after this introduction finishes.
+Each new fight opens with an opponent reveal showing the monster's health, opening intent, and any special passive. The puzzle clock starts only when the player begins the puzzle.
 
 ## Play locally
 

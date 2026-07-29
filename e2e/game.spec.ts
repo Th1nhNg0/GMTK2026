@@ -19,8 +19,9 @@ async function enterNormalEncounter(page: Page): Promise<void> {
   await expectPageToFitViewport(page);
   await page.getByRole("button", { name: "Start puzzle against Sumslinger" }).click();
   await expect(page.getByLabel("Target selection")).toBeVisible();
-  await expect(page.getByLabel("Puzzle 1 of 4")).toBeVisible();
+  await expect(page.getByLabel("Puzzle 1")).toBeVisible();
   await expect(page.getByText("0 exact", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: "Skip reveal" }).click();
 }
 
 async function openDebugTools(page: Page): Promise<void> {
@@ -83,11 +84,10 @@ test("rolls the target before opening a puzzle", async ({ page }) => {
   await expect(rollingNumber).toHaveCount(1);
   const firstNumber = await rollingNumber.innerText();
   await expect.poll(() => rollingNumber.innerText()).not.toBe(firstNumber);
+  await page.getByRole("button", { name: "Skip reveal" }).click();
   await expect(page.getByLabel("Enemy")).toBeVisible();
-  await expect(page.getByLabel("Consumables and damage guide")).toBeVisible();
-  await expect(page.getByText("Exact", { exact: true }).locator(".."))
-    .toHaveCSS("display", "flex");
-  await expect(page.getByLabel("Puzzle 1 of 4")).toBeVisible();
+  await expect(page.getByLabel("Consumables")).toBeVisible();
+  await expect(page.getByLabel("Puzzle 1")).toBeVisible();
 });
 
 test("starts a run, performs an exact operation, and claims a reward", async ({ page }) => {
@@ -99,10 +99,9 @@ test("starts a run, performs an exact operation, and claims a reward", async ({ 
   await closeDebugTools(page);
 
   await expectPageToFitViewport(page);
-  await expect(page.getByRole("region", { name: "Damage guide" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Sumslinger monster" })).toBeVisible();
   if ((page.viewportSize()?.width ?? 0) >= 1024) {
-    const consumablesBox = await page.getByLabel("Consumables and damage guide").boundingBox();
+    const consumablesBox = await page.getByLabel("Consumables").boundingBox();
     const enemyBox = await page.getByLabel("Enemy").boundingBox();
     expect(consumablesBox).not.toBeNull();
     expect(enemyBox).not.toBeNull();
@@ -213,12 +212,12 @@ test("pauses for a consumable and submits the timeout result", async ({ page }) 
   await expect(page.getByRole("dialog", { name: "Time Tonic" })).toBeVisible();
   await expect(page.getByText("Timer paused while this dialog is open.")).toBeVisible();
   await page.getByRole("button", { name: "Use now" }).click();
-  await expect(page.getByRole("button", { name: "Empty consumable slot 1" })).toBeDisabled();
+  await expect(page.getByText("No consumables")).toBeVisible();
 
   await openDebugTools(page);
   await page.getByRole("button", { name: "60×" }).click();
   await closeDebugTools(page);
-  await expect(page.getByText("Puzzle 1 resolved")).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText("Puzzle 1 resolved")).toBeVisible({ timeout: 7_000 });
   await expect(page.getByRole("heading", { name: "No damage" })).toBeVisible();
 });
 

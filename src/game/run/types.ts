@@ -64,7 +64,6 @@ export interface EncounterState {
   encounterId: string;
   type: EncounterType;
   roundIndex: number;
-  maxRounds: number;
   roundHistory: PuzzleAttempt[];
   enemy: EnemyState;
   numberSequence: NumberSequenceState;

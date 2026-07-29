@@ -59,42 +59,6 @@ function accuracyTier(distance?: number): string {
   return `Off by ${distance}`;
 }
 
-function DamageGuide() {
-  const tiers = [
-    ["Exact", "10"],
-    ["1–5 off", "7"],
-    ["6–10 off", "5"],
-    ["11+ off", "0"],
-  ];
-
-  return (
-    <section
-      aria-label="Damage guide"
-      className="mt-2 border border-gold/25 bg-[#171611] p-2 lg:mt-3 lg:p-3"
-    >
-      <p className="mb-1.5 text-[9px] font-black uppercase tracking-widest text-gold lg:text-[10px]">
-        Accuracy → base power
-      </p>
-      <div className="space-y-1">
-        {tiers.map(([label, damage]) => (
-          <div
-            key={label}
-            className="flex items-center justify-between border border-parchment/10 bg-ink/40 px-2 py-1.5"
-          >
-            <span className="text-[8px] font-bold text-parchment/55 lg:text-[9px]">
-              {label}
-            </span>
-            <strong className="text-xs text-gold lg:text-sm">{damage}</strong>
-          </div>
-        ))}
-      </div>
-      <p className="mt-2 hidden text-[9px] leading-snug text-parchment/50 lg:block">
-        Base ± bonuses = attack power. Enemy armor then reduces actual HP lost.
-      </p>
-    </section>
-  );
-}
-
 function HealthBar({
   value,
   max,
@@ -109,6 +73,8 @@ function HealthBar({
     <div
       className="h-2.5 overflow-hidden border border-parchment/15 bg-ink/70"
       role="progressbar"
+      aria-label={`Opponent health: ${value} of ${max}`}
+      aria-valuemin={0}
       aria-valuenow={value}
       aria-valuemax={max}
     >
@@ -140,16 +106,22 @@ function PuzzleTimer({ run, paused }: { run: RunState; paused: boolean }) {
 
   if (!timerActive) {
     return (
-      <div className="font-display text-xl font-black text-mint" aria-label="Puzzle resolved">
-        Done
+      <div aria-label="Puzzle resolved">
+        <span className="block text-[8px] font-black uppercase tracking-widest text-parchment/45 sm:text-[10px]">
+          Time
+        </span>
+        <span className="font-display text-xl font-black text-mint">Done</span>
       </div>
     );
   }
 
   return (
     <div className="min-w-24" aria-label={`${Math.ceil(remaining)} seconds remaining`}>
+      <span className="block text-[8px] font-black uppercase tracking-widest text-parchment/45 sm:text-[10px]">
+        Time
+      </span>
       <div
-        className={`font-display text-3xl font-black tabular-nums ${urgent ? "text-coral" : "text-parchment"}`}
+        className={`font-display text-3xl font-black leading-none tabular-nums ${urgent ? "text-coral" : "text-parchment"}`}
       >
         {paused ? "Ⅱ" : Math.ceil(remaining)}
       </div>
@@ -172,31 +144,38 @@ function ConsumableTray({ run }: { run: RunState }) {
   const dispatch = useGameStore((state) => state.dispatch);
   const selectedId = dialogSlot === null ? null : run.consumableSlots[dialogSlot];
   const selected = CONSUMABLES.find((item) => item.id === selectedId);
+  const available = run.consumableSlots.flatMap((consumableId, slotIndex) => {
+    const consumable = CONSUMABLES.find((item) => item.id === consumableId);
+    return consumable ? [{ consumable, slotIndex }] : [];
+  });
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-2 lg:grid-cols-1" aria-label="Consumables">
-        {run.consumableSlots.map((consumableId, index) => {
-          const consumable = CONSUMABLES.find((item) => item.id === consumableId);
-          return (
+      <div
+        className={`grid gap-2 ${available.length > 1 ? "grid-cols-3 lg:grid-cols-1" : "grid-cols-1"}`}
+        role="group"
+        aria-label="Item slots"
+      >
+        {available.length ? (
+          available.map(({ consumable, slotIndex }) => (
             <button
-              key={index}
-              disabled={!consumable || run.encounter?.status !== "puzzle"}
-              onClick={() => setDialogSlot(index)}
+              key={slotIndex}
+              disabled={run.encounter?.status !== "puzzle"}
+              onClick={() => setDialogSlot(slotIndex)}
               className="flex min-h-16 min-w-0 flex-col items-center justify-center border border-parchment/15 bg-ink/40 px-1.5 py-2 text-[10px] font-bold leading-tight text-parchment/70 transition-colors hover:border-mint hover:text-mint disabled:opacity-30 sm:text-xs lg:min-h-11 lg:flex-row lg:justify-start lg:gap-2 lg:px-3 lg:text-left"
-              aria-label={
-                consumable ? `Use ${consumable.name}` : `Empty consumable slot ${index + 1}`
-              }
+              aria-label={`Use ${consumable.name}`}
             >
               <span className="shrink-0 text-lg" aria-hidden="true">
-                {consumable ? "▣" : "—"}
+                ▣
               </span>
-              <span className="min-w-0 whitespace-normal break-words">
-                {consumable?.name ?? "Empty"}
-              </span>
+              <span className="min-w-0 whitespace-normal break-words">{consumable.name}</span>
             </button>
-          );
-        })}
+          ))
+        ) : (
+          <p className="border border-dashed border-parchment/15 px-3 py-2 text-center text-xs text-parchment/40">
+            No consumables
+          </p>
+        )}
       </div>
       <Dialog.Root open={dialogSlot !== null} onOpenChange={(open) => !open && setDialogSlot(null)}>
         <Dialog.Portal>
@@ -347,42 +326,12 @@ function PuzzleProgress({ run }: { run: RunState }) {
   const failed = encounter.roundHistory.filter((attempt) => attempt.outcome === "failed").length;
 
   return (
-    <div aria-label={`Puzzle ${encounter.roundIndex} of ${encounter.maxRounds}`}>
-      <p className="mb-1 text-[8px] font-black uppercase tracking-widest text-zinc-500 sm:text-[10px]">
-        Opponent puzzle <span className="text-white">{encounter.roundIndex}</span> /{" "}
-        {encounter.maxRounds}
+    <div aria-label={`Puzzle ${encounter.roundIndex}`}>
+      <p className="text-[9px] font-black uppercase tracking-widest text-parchment/45 sm:text-xs">
+        Puzzle{" "}
+        <span className="font-display text-base text-white sm:text-lg">{encounter.roundIndex}</span>
       </p>
-      <div className="flex items-center gap-1">
-        {Array.from({ length: encounter.maxRounds }, (_, index) => {
-          const puzzleNumber = index + 1;
-          const attempt = encounter.roundHistory[index];
-          const current = puzzleNumber === encounter.roundIndex && encounter.status === "puzzle";
-          const symbol =
-            attempt?.outcome === "solved"
-              ? "✓"
-              : attempt?.outcome === "partial"
-                ? "≈"
-                : attempt?.outcome === "failed"
-                  ? "×"
-                  : puzzleNumber;
-          return (
-            <span
-              key={puzzleNumber}
-              title={
-                attempt
-                  ? `Puzzle ${puzzleNumber}: ${attempt.outcome}`
-                  : current
-                    ? `Puzzle ${puzzleNumber}: current`
-                    : `Puzzle ${puzzleNumber}: remaining`
-              }
-              className={`grid size-6 place-items-center border text-[9px] font-black sm:size-7 sm:text-[10px] ${attempt?.outcome === "solved" ? "border-gold bg-gold text-ink" : attempt?.outcome === "partial" ? "border-gold/50 bg-gold/10 text-gold" : attempt?.outcome === "failed" ? "border-coral/50 bg-coral/10 text-coral" : current ? "border-parchment bg-parchment text-ink" : "border-parchment/20 bg-ink text-parchment/30"}`}
-            >
-              {symbol}
-            </span>
-          );
-        })}
-      </div>
-      <p className="mt-1 text-[8px] font-bold uppercase tracking-wider text-zinc-500 sm:text-[9px]">
+      <p className="text-[8px] font-bold uppercase tracking-wider text-zinc-500 sm:text-[9px]">
         <span className="text-yellow-400">{solved} exact</span> · {partial} close ·{" "}
         <span className={failed > 0 ? "text-red-300" : undefined}>{failed} missed</span>
       </p>
@@ -698,6 +647,9 @@ function TargetReveal({
         <p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-parchment/50">
           {locked ? "Target locked" : "Rolling numbers…"}
         </p>
+        <GameButton className="mt-4" variant="quiet" onClick={onComplete}>
+          Skip reveal
+        </GameButton>
       </section>
     </motion.div>
   );
@@ -705,13 +657,7 @@ function TargetReveal({
 
 function EncounterIntro({ run, onComplete }: { run: RunState; onComplete: () => void }) {
   const encounter = run.encounter!;
-  const reducedMotion = useUiStore((state) => state.reducedMotion);
   const enemyDefinition = ENEMIES.find((enemy) => enemy.id === encounter.enemy.enemyId);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(onComplete, reducedMotion ? 180 : 2_800);
-    return () => window.clearTimeout(timeout);
-  }, [onComplete, reducedMotion]);
 
   return (
     <main
@@ -759,7 +705,7 @@ function EncounterIntro({ run, onComplete }: { run: RunState; onComplete: () => 
               {encounter.type} encounter
             </span>
             <span className="text-[9px] font-bold uppercase tracking-wider text-parchment/35">
-              {encounter.maxRounds} puzzles
+              Fight until one side falls
             </span>
           </div>
           <h1 className="mt-2 font-display text-3xl font-bold uppercase leading-none sm:text-4xl">
@@ -804,15 +750,7 @@ function EncounterIntro({ run, onComplete }: { run: RunState; onComplete: () => 
           >
             Start puzzle
           </GameButton>
-          <p className="mt-2 text-center text-[9px] text-parchment/35">Starting automatically…</p>
         </motion.div>
-
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: reducedMotion ? 0.1 : 2.8, ease: "linear" }}
-          className="absolute inset-x-0 bottom-0 h-1 origin-left bg-coral"
-        />
       </motion.section>
     </main>
   );
@@ -829,7 +767,8 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
   const [revealedResolutionKey, setRevealedResolutionKey] = useState<string | null>(null);
   const [landedResolutionKey, setLandedResolutionKey] = useState<string | null>(null);
   const targetRevealKey = encounter?.status === "puzzle" ? encounter.puzzle.puzzleId : null;
-  const showingTargetReveal = targetRevealKey !== null && targetRevealKey !== revealedTargetPuzzleId;
+  const showingTargetReveal =
+    targetRevealKey !== null && targetRevealKey !== revealedTargetPuzzleId;
   const completeTargetReveal = useCallback(() => {
     if (targetRevealKey) setRevealedTargetPuzzleId(targetRevealKey);
   }, [targetRevealKey]);
@@ -969,7 +908,7 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
   };
 
   return (
-    <main className="relative mx-auto grid h-full min-h-0 w-full max-w-6xl grid-rows-[auto_minmax(0,1fr)_auto] gap-2 overflow-hidden p-1 sm:p-2 lg:grid-cols-[180px_minmax(0,1fr)_250px] lg:grid-rows-1 lg:gap-3 lg:p-4">
+    <main className="relative mx-auto grid h-full min-h-0 w-full max-w-6xl grid-rows-[auto_minmax(0,1fr)_auto] gap-2 overflow-hidden p-1 sm:p-2 lg:grid-cols-[160px_minmax(0,1fr)_230px] lg:grid-rows-1 lg:p-4">
       {showingImpact && <AttackFx run={run} />}
       <motion.aside
         aria-label="Enemy"
@@ -1066,8 +1005,10 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
         <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
           <PuzzleProgress run={run} />
           <div className="min-w-24 border border-gold/35 bg-gold px-5 py-2.5 text-center text-ink shadow-[0_8px_24px_rgba(234,179,8,0.16)] sm:min-w-32 sm:px-7 sm:py-3">
-            <span className="sr-only">Target </span>
-            <strong className="font-display text-4xl font-black leading-none sm:text-5xl">
+            <span className="block text-[8px] font-black uppercase tracking-widest opacity-60 sm:text-[10px]">
+              Target
+            </span>
+            <strong className="block font-display text-4xl font-black leading-none sm:text-5xl">
               {showingTargetReveal ? "???" : puzzle.target}
             </strong>
           </div>
@@ -1161,21 +1102,20 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
                   className="mx-auto mt-2 w-full max-w-md flex-1 space-y-1 overflow-hidden lg:mt-3 lg:space-y-2"
                   aria-label="Calculation rows"
                 >
-                  {puzzle.operations.map((operation, index) => {
+                  {puzzle.operations.map((operation) => {
                     const resultTile = puzzle.tiles[operation.resultTileId];
                     if (!resultTile) return null;
                     const resultSelected = selected.some((id) => id === resultTile.tileId);
                     const shortcutIndex = selectableTiles.findIndex(
                       (candidate) => candidate.tileId === resultTile.tileId,
                     );
-                    const isLatest = index === puzzle.operations.length - 1;
                     return (
                       <motion.div
                         layout
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
                         key={operation.operationId}
-                        className="grid grid-cols-[minmax(0,1fr)_2.25rem_minmax(0,1fr)_1rem_minmax(0,1fr)_2.25rem] items-center gap-1"
+                        className="grid grid-cols-[minmax(0,1fr)_2.25rem_minmax(0,1fr)_1rem_minmax(0,1fr)] items-center gap-1"
                       >
                         <div className="grid min-h-10 place-items-center border border-parchment/15 bg-parchment/10 px-1 font-display text-lg font-black sm:min-h-11 sm:text-xl">
                           {puzzle.tiles[operation.leftTileId]?.value}
@@ -1203,30 +1143,12 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
                             </span>
                           )}
                         </motion.button>
-                        <button
-                          type="button"
-                          disabled={!isLatest}
-                          aria-label={
-                            isLatest
-                              ? `Undo operation ${index + 1}`
-                              : `Operation ${index + 1} cannot be undone yet`
-                          }
-                          onClick={() =>
-                            dispatch({
-                              type: "PUZZLE_ACTION",
-                              action: { type: "LAST_OPERATION_UNDONE" },
-                            })
-                          }
-                          className="grid size-9 place-items-center border border-transparent text-lg text-coral transition-colors hover:border-coral/40 hover:bg-coral/10 disabled:cursor-not-allowed disabled:opacity-20"
-                        >
-                          ♲
-                        </button>
                       </motion.div>
                     );
                   })}
 
                   <div
-                    className="grid grid-cols-[minmax(0,1fr)_2.25rem_minmax(0,1fr)_1rem_minmax(0,1fr)_2.25rem] items-center gap-1"
+                    className="grid grid-cols-[minmax(0,1fr)_2.25rem_minmax(0,1fr)_1rem_minmax(0,1fr)] items-center gap-1"
                     aria-live="polite"
                   >
                     <div className="grid min-h-10 place-items-center border border-dashed border-parchment/25 bg-ink/20 px-1 font-display text-lg font-black sm:min-h-11 sm:text-xl">
@@ -1240,7 +1162,6 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
                     </div>
                     <span className="text-center text-xl font-black text-parchment/30">=</span>
                     <div className="min-h-10 border border-dashed border-parchment/25 bg-ink/20 sm:min-h-11" />
-                    <span aria-hidden="true" />
                   </div>
                 </div>
 
@@ -1300,14 +1221,13 @@ function ActiveEncounterScreen({ run }: { run: RunState }) {
         </div>
       </section>
 
-      <aside aria-label="Consumables and damage guide" className="lg:col-start-1 lg:row-start-1">
+      <aside aria-label="Consumables" className="lg:col-start-1 lg:row-start-1">
         <section className="border border-parchment/25 bg-panel p-2 lg:p-4">
           <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-parchment/45 lg:mb-3 lg:text-xs">
             Consumables
           </p>
           <ConsumableTray run={run} />
         </section>
-        <DamageGuide />
       </aside>
     </main>
   );

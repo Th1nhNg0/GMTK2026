@@ -1,4 +1,4 @@
-import { encounterPuzzleBudget, reduceGame } from "./reducer";
+import { reduceGame } from "./reducer";
 import type { GameAction, GameState } from "./run/types";
 
 function dispatch(state: GameState, ...actions: GameAction[]): GameState {
@@ -44,23 +44,18 @@ describe("game reducer", () => {
     expect(second.enemy.currentIntent.id).toBe(first.enemy.currentIntent.id);
   });
 
-  it.each([
-    ["normal", 4],
-    ["elite", 5],
-    ["boss", 6],
-  ] as const)("uses the required %s encounter length", (encounterType, rounds) => {
-    const started = reduceGame({ screen: "title" }, { type: "RUN_STARTED", seed: 44 }).state;
-    const encounter = reduceGame(started, {
-      type: "DEBUG_ENCOUNTER_STARTED",
-      encounterType,
-    }).state;
-    expect(encounter.run?.encounter?.maxRounds).toBe(rounds);
-  });
-
-  it("derives a fair puzzle budget from reliable seven-damage hits plus one recovery puzzle", () => {
-    expect(encounterPuzzleBudget(18)).toBe(4);
-    expect(encounterPuzzleBudget(28)).toBe(5);
-    expect(encounterPuzzleBudget(32)).toBe(6);
+  it("keeps creating puzzles until the enemy or player is defeated", () => {
+    let state = startEncounter();
+    for (let round = 1; round <= 4; round += 1) {
+      state = dispatch(
+        state,
+        { type: "PUZZLE_ACTION", action: { type: "RESULT_SUBMITTED", reason: "timeout" } },
+        { type: "ENCOUNTER_CONTINUED" },
+      );
+    }
+    expect(state.run?.status).toBe("active");
+    expect(state.run?.encounter?.roundIndex).toBe(5);
+    expect(state.run?.encounter?.roundHistory).toHaveLength(4);
   });
 
   it("turns the focus upgrade into permanent puzzle time", () => {

@@ -50,10 +50,6 @@ function startArmor(run: RunState): number {
     .reduce((total, effect) => total + effect.amount, 0);
 }
 
-export function encounterPuzzleBudget(enemyMaxHp: number): number {
-  return Math.ceil(enemyMaxHp / BALANCE.expectedReliableDamage) + BALANCE.recoveryPuzzleBuffer;
-}
-
 function encounterFloor(run: RunState): number {
   const current = run.map.nodes.find((node) => node.id === run.currentNodeId);
   return (current?.row ?? 0) + 1;
@@ -104,7 +100,6 @@ function createEncounter(run: RunState, type: EncounterType): RunState {
     encounterId,
     type,
     roundIndex: 1,
-    maxRounds: encounterPuzzleBudget(definition.maxHp),
     roundHistory: [],
     enemy: {
       enemyId: definition.id,
@@ -349,17 +344,6 @@ function resolveRound(
   if (nextRun.hp <= 0) {
     return {
       run: { ...nextRun, status: "defeat", defeatReason: "Your health reached zero." },
-      screen: enemyRetaliated ? "encounter" : "defeat",
-      effects,
-    };
-  }
-  if (encounter.roundIndex >= encounter.maxRounds) {
-    return {
-      run: {
-        ...nextRun,
-        status: "defeat",
-        defeatReason: `${enemy.name} survived all ${encounter.maxRounds} puzzles.`,
-      },
       screen: enemyRetaliated ? "encounter" : "defeat",
       effects,
     };
